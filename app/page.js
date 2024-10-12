@@ -6,6 +6,9 @@ import WordList from "@/app/components/WordList";
 import AddWordForm from "@/app/components/AddWordForm";
 import EditWordForm from "@/app/components/EditWordForm";
 import { getWordsWithForgettingCurve, updateStudyCount, deleteWord, getWords } from "@/lib/Firestore";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
 
 /**
  * @typedef {"random" | "createdAt" | "studyCount" | "lastStudiedAt" | "alphabetical"} SortOption
@@ -104,6 +107,20 @@ export default function WordbookApp() {
 		fetchWords();
 	}
 
+	const forgettingCurveTooltip = (
+		<div className="text-sm leading-relaxed">
+			<p className="mb-4">에빙하우스의 망각곡선: 새로운 정보를 학습한 후 시간이 지남에 따라 기억이 급격히 감소하는 현상을 설명하는 이론입니다.</p>
+			<p className="mb-2">학습 횟수에 따른 단어 숨김 기간:</p>
+			<ul className="list-disc pl-5 my-1">
+				<li>1회 학습: 1일</li>
+				<li>2회 학습: 3일</li>
+				<li>3회 학습: 7일</li>
+				<li>4회 학습: 14일</li>
+				<li>5회 이상 학습: 30일</li>
+			</ul>
+		</div>
+	);
+
 	return (
 		<>
 			<Tabs onTabChange={setActiveTab} />
@@ -120,15 +137,24 @@ export default function WordbookApp() {
 						<option value="lastStudiedAt">최근 학습일</option>
 						<option value="alphabetical">알파벳순</option>
 					</select>
-					<label className="inline-flex items-center">
-						<input
-							type="checkbox"
-							className="form-checkbox h-5 w-5 text-indigo-600"
-							checked={useForgetCurve}
-							onChange={(e) => setUseForgetCurve(e.target.checked)}
-						/>
-						<span className="ml-2 text-gray-700">망각곡선 사용</span>
-					</label>
+					<div className="flex items-center">
+						<label className="inline-flex items-center">
+							<input
+								type="checkbox"
+								className="form-checkbox h-5 w-5 text-indigo-600"
+								checked={useForgetCurve}
+								onChange={(e) => setUseForgetCurve(e.target.checked)}
+							/>
+							<span className="ml-2 text-gray-700">망각곡선 사용</span>
+						</label>
+						<Tippy
+							content={forgettingCurveTooltip}
+							interactive={true}
+							placement="bottom"
+						>
+							<QuestionMarkCircleIcon className="h-5 w-5 ml-2 text-gray-500 cursor-pointer" />
+						</Tippy>
+					</div>
 				</div>
 				{editingWord ? (
 					<EditWordForm
