@@ -5,7 +5,7 @@ import Tabs from "@/app/components/Tabs";
 import WordList from "@/app/components/WordList";
 import AddWordForm from "@/app/components/AddWordForm";
 import EditWordForm from "@/app/components/EditWordForm";
-import { getWordsWithForgettingCurve, updateStudyCount, deleteWord } from "@/lib/Firestore";
+import { getWordsWithForgettingCurve, updateStudyCount, deleteWord, getWords } from "@/lib/Firestore";
 
 /**
  * @typedef {"random" | "createdAt" | "studyCount" | "lastStudiedAt" | "alphabetical"} SortOption
@@ -30,9 +30,12 @@ export default function WordbookApp() {
 	 * Fetch words from the database and sort them
 	 */
 	async function fetchWords() {
-		let fetchedWords = useForgetCurve
-			? await getWordsWithForgettingCurve(activeTab)
-			: await getWords(activeTab);
+		let fetchedWords;
+		if (useForgetCurve) {
+			fetchedWords = await getWordsWithForgettingCurve(activeTab);
+		} else {
+			fetchedWords = await getWords(activeTab);
+		}
 		setWords(sortWords(fetchedWords, sortOption));
 	}
 
