@@ -26,7 +26,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 
 	return (
 		<li className="py-4">
-			<div className="flex items-center space-x-4">
+			<div className="flex flex-col">
 				<div className="flex-1 min-w-0">
 					<button
 						onClick={() => setIsOpen(!isOpen)}
@@ -45,36 +45,8 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 						<p className="text-sm text-gray-500 truncate">{word.examples[0]}</p>
 					)}
 				</div>
-				<div className="inline-flex items-center text-base font-semibold text-gray-900">
-					{word.studyCount}회
-				</div>
-				<button
-					onClick={() => onStudied(word.id, true)}
-					className="px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
-				>
-					외움
-				</button>
-				<button
-					onClick={() => onStudied(word.id, false)}
-					className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
-				>
-					잊음
-				</button>
-				<button
-					onClick={() => onEdit(word)}
-					className="p-1 text-gray-400 hover:text-gray-500"
-				>
-					<PencilIcon className="h-5 w-5" />
-				</button>
-				<button
-					onClick={() => onDelete(word.id)}
-					className="p-1 text-gray-400 hover:text-gray-500"
-				>
-					<TrashIcon className="h-5 w-5" />
-				</button>
-			</div>
-			{isOpen && (
-				<div className="mt-4 space-y-2">
+				{isOpen && (
+				<div className="my-4 space-y-2">
 					{language === "english" && (
 						<>
 							<p className="text-sm text-gray-600">
@@ -134,6 +106,37 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 					</p>
 				</div>
 			)}
+				<div className="flex items-center gap-1 flex-end place-content-end">
+					<div className="inline-flex items-center text-base font-semibold text-gray-900">
+						{word.studyCount}회
+					</div>
+					<button
+						onClick={() => onStudied(word.id, true)}
+						className="px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+					>
+						외움
+					</button>
+					<button
+						onClick={() => onStudied(word.id, false)}
+						className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+					>
+						잊음
+					</button>
+					<button
+						onClick={() => onEdit(word)}
+						className="p-1 text-gray-400 hover:text-gray-500"
+					>
+						<PencilIcon className="h-5 w-5" />
+					</button>
+					<button
+						onClick={() => onDelete(word.id)}
+						className="p-1 text-gray-400 hover:text-gray-500"
+					>
+						<TrashIcon className="h-5 w-5" />
+					</button>
+				</div>
+			</div>
+			
 		</li>
 	);
 }

@@ -15,7 +15,7 @@ import { getWordsWithForgettingCurve, updateStudyCount, deleteWord } from "@/lib
  * WordbookApp component
  * @returns {JSX.Element}
  */
-export default function VocabularyApp() {
+export default function WordbookApp() {
 	const [activeTab, setActiveTab] = useState("english");
 	const [words, setWords] = useState([]);
 	const [sortOption, setSortOption] = useState("random");
@@ -104,47 +104,49 @@ export default function VocabularyApp() {
 	return (
 		<>
 			<Tabs onTabChange={setActiveTab} />
-			<div className="mb-4 flex justify-between items-center">
-				<select
-					value={sortOption}
-					onChange={(e) => setSortOption(e.target.value)}
-					className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-				>
-					<option value="random">랜덤</option>
-					<option value="createdAt">생성일</option>
-					<option value="studyCount">학습 횟수</option>
-					<option value="lastStudiedAt">최근 학습일</option>
-					<option value="alphabetical">알파벳순</option>
-				</select>
-				<label className="inline-flex items-center">
-					<input
-						type="checkbox"
-						className="form-checkbox h-5 w-5 text-indigo-600"
-						checked={useForgetCurve}
-						onChange={(e) => setUseForgetCurve(e.target.checked)}
-					/>
-					<span className="ml-2 text-gray-700">망각곡선 사용</span>
-				</label>
-			</div>
-			{editingWord ? (
-				<EditWordForm
-					word={editingWord}
-					language={activeTab}
-					onWordUpdated={handleWordUpdated}
-					onCancel={handleCancelEdit}
-				/>
-			) : (
-				<>
-					<WordList
-						words={words}
+			<div className="p-4">
+				<div className="mb-4 flex flex-col justify-center items-start gap-4">
+					<select
+						value={sortOption}
+						onChange={(e) => setSortOption(e.target.value)}
+						className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+					>
+						<option value="random">랜덤</option>
+						<option value="createdAt">생성일</option>
+						<option value="studyCount">학습 횟수</option>
+						<option value="lastStudiedAt">최근 학습일</option>
+						<option value="alphabetical">알파벳순</option>
+					</select>
+					<label className="inline-flex items-center">
+						<input
+							type="checkbox"
+							className="form-checkbox h-5 w-5 text-indigo-600"
+							checked={useForgetCurve}
+							onChange={(e) => setUseForgetCurve(e.target.checked)}
+						/>
+						<span className="ml-2 text-gray-700">망각곡선 사용</span>
+					</label>
+				</div>
+				{editingWord ? (
+					<EditWordForm
+						word={editingWord}
 						language={activeTab}
-						onStudied={handleStudied}
-						onEdit={handleEdit}
-						onDelete={handleDelete}
+						onWordUpdated={handleWordUpdated}
+						onCancel={handleCancelEdit}
 					/>
-					<AddWordForm language={activeTab} onWordAdded={fetchWords} />
-				</>
-			)}
+				) : (
+					<>
+						<WordList
+							words={words}
+							language={activeTab}
+							onStudied={handleStudied}
+							onEdit={handleEdit}
+							onDelete={handleDelete}
+						/>
+						<AddWordForm language={activeTab} onWordAdded={fetchWords} />
+					</>
+				)}
+			</div>
 		</>
 	);
 }
