@@ -24,10 +24,10 @@ export default function WordbookApp() {
 
 	useEffect(() => {
 		fetchWords();
-	}, [activeTab, useForgetCurve]);
+	}, [activeTab, useForgetCurve, sortOption]);
 
 	/**
-	 * Fetch words from the database
+	 * Fetch words from the database and sort them
 	 */
 	async function fetchWords() {
 		let fetchedWords = useForgetCurve
@@ -45,19 +45,19 @@ export default function WordbookApp() {
 	function sortWords(words, option) {
 		switch (option) {
 			case "random":
-				return words.sort(() => Math.random() - 0.5);
+				return [...words].sort(() => Math.random() - 0.5);
 			case "createdAt":
-				return words.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+				return [...words].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 			case "studyCount":
-				return words.sort((a, b) => b.studyCount - a.studyCount);
+				return [...words].sort((a, b) => b.studyCount - a.studyCount);
 			case "lastStudiedAt":
-				return words.sort((a, b) => b.lastStudiedAt.getTime() - a.lastStudiedAt.getTime());
+				return [...words].sort((a, b) => b.lastStudiedAt.getTime() - a.lastStudiedAt.getTime());
 			case "alphabetical":
-				return words.sort((a, b) => {
+				return [...words].sort((a, b) => {
 					const aText = activeTab === "english" ? a.spelling : a.kanji;
 					const bText = activeTab === "english" ? b.spelling : b.kanji;
 					return aText.localeCompare(bText);
-				})
+				});
 			default:
 				return words;
 		}
@@ -98,7 +98,7 @@ export default function WordbookApp() {
 
 	function handleWordUpdated() {
 		setEditingWord(null);
-		fetchWords()
+		fetchWords();
 	}
 
 	return (
