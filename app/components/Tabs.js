@@ -33,7 +33,7 @@ export default function Tabs({ onTabChange }) {
 			<nav className="-mb-px flex" aria-label="Tabs">
 				<button
 					onClick={() => handleTabChange("english")}
-					className={`${activeTab === "english"
+					className={`${activeTab == "english"
 							? "border-indigo-500 text-indigo-600"
 							: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
 						} w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm`}
@@ -42,7 +42,7 @@ export default function Tabs({ onTabChange }) {
 				</button>
 				<button
 					onClick={() => handleTabChange("japanese")}
-					className={`${activeTab === "japanese"
+					className={`${activeTab == "japanese"
 							? "border-indigo-500 text-indigo-600"
 							: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
 						} w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm`}

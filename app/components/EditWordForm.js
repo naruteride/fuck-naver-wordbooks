@@ -39,7 +39,7 @@ export default function EditWordForm({ word, language, onWordUpdated, onCancel }
 
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
-			{language === "english" ? (
+			{language == "english" ? (
 				<>
 					<input
 						type="text"

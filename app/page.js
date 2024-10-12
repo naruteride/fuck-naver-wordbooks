@@ -60,8 +60,8 @@ export default function WordbookApp() {
 				return [...words].sort((a, b) => b.lastStudiedAt.getTime() - a.lastStudiedAt.getTime());
 			case "alphabetical":
 				return [...words].sort((a, b) => {
-					const aText = activeTab === "english" ? a.spelling : a.kanji;
-					const bText = activeTab === "english" ? b.spelling : b.kanji;
+					const aText = activeTab == "english" ? a.spelling : a.kanji;
+					const bText = activeTab == "english" ? b.spelling : b.kanji;
 					return aText.localeCompare(bText);
 				});
 			default:
@@ -109,14 +109,14 @@ export default function WordbookApp() {
 
 	const forgettingCurveTooltip = (
 		<div className="text-sm leading-relaxed">
-			<p className="mb-4">에빙하우스의 망각곡선: 새로운 정보를 학습한 후 시간이 지남에 따라 기억이 급격히 감소하는 현상을 설명하는 이론입니다.</p>
+			<p className="mb-4">에빙하우스의 망각곡선: 새로운 정보를 학습한 후, 시간이 지남에 따라 기억이 감소하는 현상을 나타내는 이론. 학습 직후 빠르게 망각되다가 복습 할수록 망각 속도가 느려집니다. 이를 이용해 효율적인 복습 주기를 설정할 수 있습니다.</p>
 			<p className="mb-2">학습 횟수에 따른 단어 숨김 기간:</p>
 			<ul className="list-disc pl-5 my-1">
-				<li>1회 학습: 1일</li>
-				<li>2회 학습: 3일</li>
-				<li>3회 학습: 7일</li>
-				<li>4회 학습: 14일</li>
-				<li>5회 이상 학습: 30일</li>
+				<li>1회 학습: 1일 후</li>
+				<li>2회 학습: 2일 후</li>
+				<li>3회 학습: 3일 후</li>
+				<li>4회 학습: 7일 후</li>
+				<li>5회 이상 학습: 30일 후</li>
 			</ul>
 		</div>
 	);

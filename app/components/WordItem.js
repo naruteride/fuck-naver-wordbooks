@@ -33,7 +33,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 						className="flex items-center w-full text-left"
 					>
 						<p className="text-sm font-medium text-gray-900 truncate mr-2">
-							{language === "english" ? word.spelling : word.kanji}
+							{language == "english" ? word.spelling : word.kanji}
 						</p>
 						{isOpen ? (
 							<ChevronUpIcon className="h-5 w-5 text-gray-400" />
@@ -47,7 +47,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 				</div>
 				{isOpen && (
 				<div className="my-4 space-y-2">
-					{language === "english" && (
+					{language == "english" && (
 						<>
 							<p className="text-sm text-gray-600">
 								<span className="font-medium">발음:</span> {word.pronunciation}
@@ -64,7 +64,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 							</div>
 						</>
 					)}
-					{language === "japanese" && (
+					{language == "japanese" && (
 						<>
 							<p className="text-sm text-gray-600">
 								<span className="font-medium">훈독:</span>{" "}

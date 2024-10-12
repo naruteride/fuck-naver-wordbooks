@@ -33,7 +33,7 @@ export default function AddWordForm({ language, onWordAdded }) {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		const newWord = {
-			...(language === "english"
+			...(language == "english"
 				? { spelling: word.spelling, pronunciation: word.pronunciation }
 				: { kanji: word.kanji, kunyomi: word.kunyomi.split(","), onyomi: word.onyomi.split(",") }),
 			meanings: word.meanings.split("\n"),
@@ -66,7 +66,7 @@ export default function AddWordForm({ language, onWordAdded }) {
 			</button>
 			{isOpen && (
 				<form onSubmit={handleSubmit} className="space-y-4">
-					{language === "english" ? (
+					{language == "english" ? (
 						<>
 							<input
 								type="text"
