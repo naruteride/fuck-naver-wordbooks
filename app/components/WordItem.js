@@ -46,66 +46,66 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 					)}
 				</div>
 				{isOpen && (
-				<div className="my-4 space-y-2">
-					{language == "english" && (
-						<>
-							<p className="text-sm text-gray-600">
-								<span className="font-medium">발음:</span> {word.pronunciation}
-							</p>
-							<div>
-								<p className="text-sm font-medium text-gray-600">뜻:</p>
-								<ul className="list-disc list-inside">
-									{word.meanings.map((meaning, index) => (
-										<li key={index} className="text-sm text-gray-600">
-											{meaning}
-										</li>
-									))}
-								</ul>
-							</div>
-						</>
-					)}
-					{language == "japanese" && (
-						<>
-							<p className="text-sm text-gray-600">
-								<span className="font-medium">훈독:</span>{" "}
-								{word.kunyomi?.join(", ")}
-							</p>
-							<p className="text-sm text-gray-600">
-								<span className="font-medium">음독:</span>{" "}
-								{word.onyomi?.join(", ")}
-							</p>
-							<div>
-								<p className="text-sm font-medium text-gray-600">뜻:</p>
-								<ul className="list-disc list-inside">
-									{word.meanings.map((meaning, index) => (
-										<li key={index} className="text-sm  text-gray-600">
-											{meaning}
-										</li>
-									))}
-								</ul>
-							</div>
-						</>
-					)}
-					<div>
-						<p className="text-sm font-medium text-gray-600">예문:</p>
-						<ul className="list-disc list-inside">
-							{word.examples.map((example, index) => (
-								<li key={index} className="text-sm text-gray-600">
-									{example}
-								</li>
-							))}
-						</ul>
+					<div className="my-4 space-y-2">
+						{language == "english" && (
+							<>
+								<p className="text-sm text-gray-600">
+									<span className="font-medium">발음:</span> {word.pronunciation}
+								</p>
+								<div>
+									<p className="text-sm font-medium text-gray-600">뜻:</p>
+									<ul className="list-disc list-inside">
+										{word.meanings.map((meaning, index) => (
+											<li key={index} className="text-sm text-gray-600">
+												{meaning}
+											</li>
+										))}
+									</ul>
+								</div>
+							</>
+						)}
+						{language == "japanese" && (
+							<>
+								<p className="text-sm text-gray-600">
+									<span className="font-medium">음독:</span>{" "}
+									{word.onyomi?.join(", ")}
+								</p>
+								<p className="text-sm text-gray-600">
+									<span className="font-medium">훈독:</span>{" "}
+									{word.kunyomi?.join(", ")}
+								</p>
+								<div>
+									<p className="text-sm font-medium text-gray-600">뜻:</p>
+									<ul className="list-disc list-inside">
+										{word.meanings.map((meaning, index) => (
+											<li key={index} className="text-sm  text-gray-600">
+												{meaning}
+											</li>
+										))}
+									</ul>
+								</div>
+							</>
+						)}
+						<div>
+							<p className="text-sm font-medium text-gray-600">예문:</p>
+							<ul className="list-disc list-inside">
+								{word.examples.map((example, index) => (
+									<li key={index} className="text-sm text-gray-600">
+										{example}
+									</li>
+								))}
+							</ul>
+						</div>
+						<p className="text-sm text-gray-600">
+							<span className="font-medium">생성일:</span>{" "}
+							{word.createdAt.toLocaleDateString()}
+						</p>
+						<p className="text-sm text-gray-600">
+							<span className="font-medium">마지막 학습일:</span>{" "}
+							{word.lastStudiedAt.toLocaleDateString()}
+						</p>
 					</div>
-					<p className="text-sm text-gray-600">
-						<span className="font-medium">생성일:</span>{" "}
-						{word.createdAt.toLocaleDateString()}
-					</p>
-					<p className="text-sm text-gray-600">
-						<span className="font-medium">마지막 학습일:</span>{" "}
-						{word.lastStudiedAt.toLocaleDateString()}
-					</p>
-				</div>
-			)}
+				)}
 				<div className="flex items-center gap-1 flex-end place-content-end">
 					<div className="inline-flex items-center text-base font-semibold text-gray-900">
 						{word.studyCount}회
@@ -136,7 +136,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 					</button>
 				</div>
 			</div>
-			
+
 		</li>
 	);
 }

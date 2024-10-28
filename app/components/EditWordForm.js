@@ -69,16 +69,16 @@ export default function EditWordForm({ word, language, onWordUpdated, onCancel }
 					/>
 					<input
 						type="text"
-						value={editedWord.kunyomi?.join(", ")}
-						onChange={(e) => setEditedWord({ ...editedWord, kunyomi: e.target.value.split(", ") })}
-						placeholder="훈독 (쉼표로 구분)"
+						value={editedWord.onyomi?.join(", ")}
+						onChange={(e) => setEditedWord({ ...editedWord, onyomi: e.target.value.split(", ") })}
+						placeholder="음독 (쉼표로 구분)"
 						className="w-full px-3 py-2 border rounded-md"
 					/>
 					<input
 						type="text"
-						value={editedWord.onyomi?.join(", ")}
-						onChange={(e) => setEditedWord({ ...editedWord, onyomi: e.target.value.split(", ") })}
-						placeholder="음독 (쉼표로 구분)"
+						value={editedWord.kunyomi?.join(", ")}
+						onChange={(e) => setEditedWord({ ...editedWord, kunyomi: e.target.value.split(", ") })}
+						placeholder="훈독 (쉼표로 구분)"
 						className="w-full px-3 py-2 border rounded-md"
 					/>
 				</>

@@ -96,16 +96,16 @@ export default function AddWordForm({ language, onWordAdded }) {
 							/>
 							<input
 								type="text"
-								value={word.kunyomi}
-								onChange={(e) => setWord({ ...word, kunyomi: e.target.value })}
-								placeholder="훈독 (쉼표로 구분)"
+								value={word.onyomi}
+								onChange={(e) => setWord({ ...word, onyomi: e.target.value })}
+								placeholder="음독 (쉼표로 구분)"
 								className="w-full px-3 py-2 border rounded-md"
 							/>
 							<input
 								type="text"
-								value={word.onyomi}
-								onChange={(e) => setWord({ ...word, onyomi: e.target.value })}
-								placeholder="음독 (쉼표로 구분)"
+								value={word.kunyomi}
+								onChange={(e) => setWord({ ...word, kunyomi: e.target.value })}
+								placeholder="훈독 (쉼표로 구분)"
 								className="w-full px-3 py-2 border rounded-md"
 							/>
 						</>
