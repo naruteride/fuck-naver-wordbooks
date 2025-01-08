@@ -32,7 +32,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 						onClick={() => setIsOpen(!isOpen)}
 						className="flex items-center w-full text-left"
 					>
-						<p className="text-sm font-medium text-gray-900 truncate mr-2">
+						<p className="text-2xl font-medium text-gray-900 truncate mr-2">
 							{language == "english" ? word.spelling : word.kanji}
 						</p>
 						{isOpen ? (
@@ -112,7 +112,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 					</div>
 					<button
 						onClick={() => onStudied(word.id, true)}
-						className="px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+						className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
 					>
 						외움
 					</button>
