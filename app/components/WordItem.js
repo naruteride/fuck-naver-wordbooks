@@ -42,7 +42,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 						)}
 					</button>
 					{!isOpen && (
-						<p className="text-sm text-gray-500 truncate">{word.examples[0]}</p>
+						<p className="text-sm text-gray-500">{word.examples[0]}</p>
 					)}
 				</div>
 				{isOpen && (
