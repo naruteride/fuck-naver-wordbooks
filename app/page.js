@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import Tabs from "@/app/components/Tabs";
-import WordList from "@/app/components/WordList";
-import AddWordForm from "@/app/components/AddWordForm";
-import EditWordForm from "@/app/components/EditWordForm";
+import Tabs from "@/app/components/tabs";
+import WordList from "@/app/components/word-list";
+import AddWordForm from "@/app/components/add-word-form";
+import EditWordForm from "@/app/components/edit-word-form";
 import { getWordsWithForgettingCurve, updateStudyCount, deleteWord, getWords } from "@/lib/Firestore";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import Tippy from "@tippyjs/react";
