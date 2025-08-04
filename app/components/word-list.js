@@ -1,6 +1,6 @@
 "use client"
 
-import WordItem from "./WordItem";
+import WordItem from "./word-item";
 
 /**
  * @typedef {import("@/lib/Firestore").Word} Word
