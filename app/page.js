@@ -8,6 +8,7 @@ import EditWordForm from "@/app/components/edit-word-form";
 import UserInfo from "@/app/components/user-info";
 import WordbookManager from "@/app/components/wordbook-manager";
 import WordbookSelector from "@/app/components/wordbook-selector";
+import LegacyMigration from "@/app/components/legacy-migration";
 import { 
 	getUserWordbooks, 
 	getWordsFromWordbooks, 
@@ -161,6 +162,11 @@ export default function WordbookApp() {
 		fetchWords();
 	}
 
+	function handleMigrationComplete() {
+		// 마이그레이션 완료 후 단어장 목록 새로고침
+		loadWordbooks();
+	}
+
 	const forgettingCurveTooltip = (
 		<div className="text-sm leading-relaxed">
 			<p className="mb-4">에빙하우스의 망각곡선: 새로운 정보를 학습한 후, 시간이 지남에 따라 기억이 감소하는 현상을 나타내는 이론. 학습 직후 빠르게 망각되다가 복습 할수록 망각 속도가 느려집니다. 이를 이용해 효율적인 복습 주기를 설정할 수 있습니다.</p>
@@ -182,6 +188,7 @@ export default function WordbookApp() {
 	return (
 		<>
 			<UserInfo />
+			<LegacyMigration onMigrationComplete={handleMigrationComplete} />
 			<WordbookManager wordbooks={wordbooks} onWordbooksChange={loadWordbooks} />
 			<Tabs onTabChange={setActiveTab} />
 			<div className="p-4">
