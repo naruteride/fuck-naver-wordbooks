@@ -200,13 +200,7 @@ export default function WordbookApp() {
 						onCancel={handleCancelEdit}
 					/>
 				) : (
-					<>
-						<AddWordForm 
-							language={activeTab} 
-							selectedWordbooks={selectedWordbooks}
-							onWordAdded={fetchWords} 
-						/>
-						
+					<>	
 						<div className="mb-4 space-y-3">
 							<WordbookSelector
 								wordbooks={wordbooks}
@@ -250,7 +244,14 @@ export default function WordbookApp() {
 							
 							<p className="text-gray-600 text-sm">총 {words.length}개의 단어</p>
 						</div>
+
+						<AddWordForm 
+							language={activeTab} 
+							selectedWordbooks={selectedWordbooks}
+							onWordAdded={fetchWords} 
+						/>
 						
+						<div className="min-h-svh">
 						{selectedWordbooks.length === 0 ? (
 							<div className="text-center py-8 text-gray-500">
 								단어장을 선택하거나 새로 만들어주세요
@@ -263,7 +264,7 @@ export default function WordbookApp() {
 								onEdit={handleEdit}
 								onDelete={handleDelete}
 							/>
-						)}
+						)}</div>
 					</>
 				)}
 			</div>

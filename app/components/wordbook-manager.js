@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/AuthProvider";
-import { createWordbook, deleteWordbook, addCollaborator, removeCollaborator } from "../../lib/Firestore";
+import { 
+  createWordbook, 
+  deleteWordbook, 
+  addCollaborator, 
+  removeCollaborator,
+  getWordbookCollaborators 
+} from "../../lib/Firestore";
 import { PlusIcon, TrashIcon, UserPlusIcon, UserMinusIcon } from "@heroicons/react/24/outline";
 
 export default function WordbookManager({ wordbooks, onWordbooksChange }) {
@@ -11,6 +17,26 @@ export default function WordbookManager({ wordbooks, onWordbooksChange }) {
   const [newWordbook, setNewWordbook] = useState({ name: "", language: "english" });
   const [expandedWordbook, setExpandedWordbook] = useState(null);
   const [collaboratorEmail, setCollaboratorEmail] = useState("");
+  const [wordbookCollaborators, setWordbookCollaborators] = useState({});
+
+  // 확장된 단어장의 협업자 정보 로드
+  useEffect(() => {
+    if (expandedWordbook) {
+      loadCollaborators(expandedWordbook);
+    }
+  }, [expandedWordbook]);
+
+  const loadCollaborators = async (wordbookId) => {
+    try {
+      const collaborators = await getWordbookCollaborators(wordbookId);
+      setWordbookCollaborators(prev => ({
+        ...prev,
+        [wordbookId]: collaborators
+      }));
+    } catch (error) {
+      console.error("협업자 정보 로딩 오류:", error);
+    }
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -44,6 +70,7 @@ export default function WordbookManager({ wordbooks, onWordbooksChange }) {
       await addCollaborator(wordbookId, collaboratorEmail.trim());
       setCollaboratorEmail("");
       onWordbooksChange();
+      loadCollaborators(wordbookId); // 협업자 목록 새로고침
       alert("협업자가 추가되었습니다!");
     } catch (error) {
       alert(`협업자 추가 오류: ${error.message}`);
@@ -56,9 +83,17 @@ export default function WordbookManager({ wordbooks, onWordbooksChange }) {
     try {
       await removeCollaborator(wordbookId, userEmail);
       onWordbooksChange();
+      loadCollaborators(wordbookId); // 협업자 목록 새로고침
     } catch (error) {
       alert(`협업자 제거 오류: ${error.message}`);
     }
+  };
+
+  const getCollaboratorDisplayName = (collaborator) => {
+    if (collaborator.id === user?.uid) {
+      return `${collaborator.displayName || collaborator.email} (나)`;
+    }
+    return collaborator.displayName || collaborator.email;
   };
 
   return (
@@ -110,79 +145,102 @@ export default function WordbookManager({ wordbooks, onWordbooksChange }) {
       )}
 
       <div className="space-y-2">
-        {wordbooks.map((wordbook) => (
-          <div key={wordbook.id} className="border border-gray-200 rounded p-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <h4 className="font-medium">{wordbook.name}</h4>
-                <p className="text-sm text-gray-500">
-                  {wordbook.language === "english" ? "영어" : "일본어"} •{" "}
-                  {wordbook.createdBy === user.uid ? "내가 생성" : "공유받음"} •{" "}
-                  {wordbook.collaborators.length}명 참여
-                </p>
-              </div>
-              <div className="flex space-x-1">
-                <button
-                  onClick={() => setExpandedWordbook(expandedWordbook === wordbook.id ? null : wordbook.id)}
-                  className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
-                >
-                  {expandedWordbook === wordbook.id ? "접기" : "관리"}
-                </button>
-                {wordbook.createdBy === user.uid && (
+        {wordbooks.map((wordbook) => {
+          const collaborators = wordbookCollaborators[wordbook.id] || [];
+          
+          return (
+            <div key={wordbook.id} className="border border-gray-200 rounded p-3">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="font-medium">{wordbook.name}</h4>
+                  <p className="text-sm text-gray-500">
+                    {wordbook.language === "english" ? "영어" : "일본어"} •{" "}
+                    {wordbook.createdBy === user.uid ? "내가 생성" : "공유받음"} •{" "}
+                    {wordbook.collaborators.length}명 참여
+                  </p>
+                </div>
+                <div className="flex space-x-1">
                   <button
-                    onClick={() => handleDelete(wordbook.id)}
-                    className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                    onClick={() => setExpandedWordbook(expandedWordbook === wordbook.id ? null : wordbook.id)}
+                    className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
                   >
-                    <TrashIcon className="h-3 w-3" />
+                    {expandedWordbook === wordbook.id ? "접기" : "관리"}
                   </button>
-                )}
-              </div>
-            </div>
-
-            {expandedWordbook === wordbook.id && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <h5 className="font-medium mb-2">협업자 관리</h5>
-                
-                <div className="mb-3">
-                  <div className="flex space-x-2">
-                    <input
-                      type="email"
-                      placeholder="이메일 주소"
-                      value={collaboratorEmail}
-                      onChange={(e) => setCollaboratorEmail(e.target.value)}
-                      className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm"
-                    />
+                  {wordbook.createdBy === user.uid && (
                     <button
-                      onClick={() => handleAddCollaborator(wordbook.id)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 flex items-center"
+                      onClick={() => handleDelete(wordbook.id)}
+                      className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
                     >
-                      <UserPlusIcon className="h-4 w-4 mr-1" />
-                      추가
+                      <TrashIcon className="h-3 w-3" />
                     </button>
+                  )}
+                </div>
+              </div>
+
+              {expandedWordbook === wordbook.id && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <h5 className="font-medium mb-2">협업자 관리</h5>
+                  
+                  {wordbook.createdBy === user.uid && (
+                    <div className="mb-3">
+                      <div className="flex space-x-2">
+                        <input
+                          type="email"
+                          placeholder="이메일 주소"
+                          value={collaboratorEmail}
+                          onChange={(e) => setCollaboratorEmail(e.target.value)}
+                          className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm"
+                        />
+                        <button
+                          onClick={() => handleAddCollaborator(wordbook.id)}
+                          className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 flex items-center"
+                        >
+                          <UserPlusIcon className="h-4 w-4 mr-1" />
+                          추가
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        * 친구가 먼저 앱에 가입해야 추가할 수 있습니다
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    {collaborators.map((collaborator) => (
+                      <div key={collaborator.id} className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">
+                            {getCollaboratorDisplayName(collaborator)}
+                          </span>
+                          {collaborator.id === wordbook.createdBy && (
+                            <span className="text-xs text-blue-600 ml-2">(생성자)</span>
+                          )}
+                          {collaborator.email !== collaborator.id && (
+                            <div className="text-xs text-gray-500">{collaborator.email}</div>
+                          )}
+                        </div>
+                        {wordbook.createdBy === user.uid && collaborator.id !== user.uid && (
+                          <button
+                            onClick={() => handleRemoveCollaborator(wordbook.id, collaborator.email)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <UserMinusIcon className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {collaborators.length === 0 && expandedWordbook === wordbook.id && (
+                      <div className="text-center text-gray-500 text-sm py-2">
+                        협업자 정보를 불러오는 중...
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="space-y-1">
-                  {wordbook.collaborators.map((collaborator) => (
-                    <div key={collaborator} className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded">
-                      <span className="text-sm">
-                        {collaborator} {collaborator === user.uid && "(나)"}
-                      </span>
-                      {wordbook.createdBy === user.uid && collaborator !== user.uid && (
-                        <button
-                          onClick={() => handleRemoveCollaborator(wordbook.id, collaborator)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <UserMinusIcon className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

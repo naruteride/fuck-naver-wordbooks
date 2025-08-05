@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getAllUserWordStats } from "../../../lib/Firestore";
+import { getAllUserWordStats, getUserProfile } from "../../../lib/Firestore";
 import { useAuth } from "../../../lib/AuthProvider";
 import { UsersIcon } from "@heroicons/react/24/outline";
 
 export default function UserStatsDisplay({ wordbookId, wordId }) {
   const { user } = useAuth();
   const [allStats, setAllStats] = useState({});
+  const [userProfiles, setUserProfiles] = useState({});
   const [loading, setLoading] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
@@ -22,6 +23,16 @@ export default function UserStatsDisplay({ wordbookId, wordId }) {
     try {
       const stats = await getAllUserWordStats(wordbookId, wordId);
       setAllStats(stats);
+      
+      // 각 사용자의 프로필 정보 로드
+      const profiles = {};
+      for (const userId of Object.keys(stats)) {
+        const profile = await getUserProfile(userId);
+        if (profile) {
+          profiles[userId] = profile;
+        }
+      }
+      setUserProfiles(profiles);
     } catch (error) {
       console.error("학습 통계 로딩 오류:", error);
     }
@@ -35,11 +46,14 @@ export default function UserStatsDisplay({ wordbookId, wordId }) {
 
   const getUserDisplayName = (userId) => {
     if (userId === user?.uid) return "나";
-    // 이메일에서 @ 앞부분만 표시
-    if (userId.includes("@")) {
-      return userId.split("@")[0];
+    
+    const profile = userProfiles[userId];
+    if (profile) {
+      return profile.displayName || profile.email.split("@")[0];
     }
-    return userId.slice(-6); // UID의 마지막 6자리
+    
+    // 프로필이 없는 경우 UID의 일부만 표시
+    return userId.slice(-6);
   };
 
   const currentUserStat = allStats[user?.uid];
@@ -75,9 +89,14 @@ export default function UserStatsDisplay({ wordbookId, wordId }) {
             <div className="space-y-1">
               {Object.entries(allStats).map(([userId, stats]) => (
                 <div key={userId} className="flex justify-between items-center text-sm">
-                  <span className="text-gray-700">
+                  <span className="text-gray-700 flex-1">
                     {getUserDisplayName(userId)}
                     {userId === user?.uid && <span className="text-blue-600 ml-1">(현재 사용자)</span>}
+                    {userProfiles[userId] && userId !== user?.uid && (
+                      <div className="text-xs text-gray-500">
+                        {userProfiles[userId].email}
+                      </div>
+                    )}
                   </span>
                   <div className="text-right">
                     <span className="font-medium">{stats.studyCount}회</span>
