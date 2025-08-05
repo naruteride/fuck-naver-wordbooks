@@ -200,13 +200,13 @@ export default function LegacyMigration({ onMigrationComplete }) {
 
 							{migrationResult.english.words > 0 && (
 								<p className="text-green-600 mb-1">
-									✅ 영어 단어 {migrationResult.english.words}개 → "내 영어 단어장 (기존)"
+									✅ 영어 단어 {migrationResult.english.words}개 → &ldquo;내 영어 단어장 (기존)&rdquo;
 								</p>
 							)}
 
 							{migrationResult.japanese.words > 0 && (
 								<p className="text-green-600 mb-1">
-									✅ 일본어 단어 {migrationResult.japanese.words}개 → "내 일본어 단어장 (기존)"
+									✅ 일본어 단어 {migrationResult.japanese.words}개 → &ldquo;내 일본어 단어장 (기존)&dquo;
 								</p>
 							)}
 
