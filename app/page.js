@@ -36,6 +36,13 @@ export default function WordbookApp() {
 	const [useForgetCurve, setUseForgetCurve] = useState(true);
 	const [editingWord, setEditingWord] = useState(null);
 
+	const showConfirm = (message) => {
+		if (typeof window !== 'undefined') {
+			return window.confirm(message);
+		}
+		return false;
+	};
+
 	useEffect(() => {
 		if (user) {
 			loadWordbooks();
@@ -139,7 +146,7 @@ export default function WordbookApp() {
 		const word = words.find(w => w.id === wordId);
 		if (!word) return;
 		
-		if (window.confirm("정말로 이 단어를 삭제하시겠습니까?")) {
+		if (showConfirm("정말로 이 단어를 삭제하시겠습니까?")) {
 			try {
 				await deleteWordFromWordbook(wordId, word.wordbookId);
 				fetchWords();

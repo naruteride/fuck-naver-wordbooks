@@ -7,11 +7,27 @@ export default function UserInfo() {
 	const { user } = useAuth();
 	const [showUID, setShowUID] = useState(false);
 
+	const showAlert = (message) => {
+		if (typeof window !== 'undefined') {
+			alert(message);
+		} else {
+			console.log(message);
+		}
+	};
+
 	if (!user) return null;
 
 	const copyUID = () => {
-		navigator.clipboard.writeText(user.uid);
-		alert("UID가 클립보드에 복사되었습니다!");
+		if (typeof window !== 'undefined' && navigator.clipboard) {
+			navigator.clipboard.writeText(user.uid).then(() => {
+				showAlert("UID가 클립보드에 복사되었습니다!");
+			}).catch((error) => {
+				console.error("클립보드 복사 오류:", error);
+				showAlert("클립보드 복사에 실패했습니다.");
+			});
+		} else {
+			showAlert("클립보드 기능을 사용할 수 없습니다.");
+		}
 	};
 
 	return (

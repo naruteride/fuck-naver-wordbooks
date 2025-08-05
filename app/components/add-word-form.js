@@ -31,6 +31,14 @@ export default function AddWordForm({ language, selectedWordbooks, onWordAdded }
 		examples: "",
 	});
 
+	const showAlert = (message) => {
+		if (typeof window !== 'undefined') {
+			alert(message);
+		} else {
+			console.log(message);
+		}
+	};
+
 	// 단어장 이름들 로드
 	useEffect(() => {
 		const loadWordbookNames = async () => {
@@ -76,7 +84,7 @@ export default function AddWordForm({ language, selectedWordbooks, onWordAdded }
 			setIsOpen(false);
 			onWordAdded();
 		} catch (error) {
-			alert(`단어 추가 오류: ${error.message}`);
+			showAlert(`단어 추가 오류: ${error.message}`);
 		}
 	};
 

@@ -20,6 +20,21 @@ export default function LegacyMigration({ onMigrationComplete }) {
 	const [legacyDataCounts, setLegacyDataCounts] = useState(null);
 	const [hasLegacyData, setHasLegacyData] = useState(false);
 
+	const showAlert = (message) => {
+		if (typeof window !== 'undefined') {
+			alert(message);
+		} else {
+			console.log(message);
+		}
+	};
+
+	const showConfirm = (message) => {
+		if (typeof window !== 'undefined') {
+			return confirm(message);
+		}
+		return false;
+	};
+
 	// 컴포넌트 로드 시 자동으로 기존 데이터 확인
 	useEffect(() => {
 		if (user) {
@@ -55,7 +70,7 @@ export default function LegacyMigration({ onMigrationComplete }) {
 	};
 
 	const migrateData = async () => {
-		if (!user || !confirm("기존 단어들을 새로운 단어장 구조로 이동시키시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다!")) {
+		if (!user || !showConfirm("기존 단어들을 새로운 단어장 구조로 이동시키시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다!")) {
 			return;
 		}
 

@@ -1,15 +1,33 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmailAuthProvider, GoogleAuthProvider } from "firebase/auth";
-import * as firebaseui from "firebaseui";
-import "firebaseui/dist/firebaseui.css";
 import { auth } from "../../lib/Firebase";
 
 export default function Login() {
 	const uiRef = useRef(null);
+	const [firebaseui, setFirebaseui] = useState(null);
 
 	useEffect(() => {
+		// 클라이언트 사이드에서만 FirebaseUI 동적 import
+		const loadFirebaseUI = async () => {
+			if (typeof window !== 'undefined') {
+				try {
+					const firebaseuiModule = await import("firebaseui");
+					await import("firebaseui/dist/firebaseui.css");
+					setFirebaseui(firebaseuiModule);
+				} catch (error) {
+					console.error("FirebaseUI 로딩 오류:", error);
+				}
+			}
+		};
+
+		loadFirebaseUI();
+	}, []);
+
+	useEffect(() => {
+		if (!firebaseui || typeof window === 'undefined') return;
+
 		// FirebaseUI 설정
 		const uiConfig = {
 			signInSuccessUrl: "/",
@@ -24,22 +42,29 @@ export default function Login() {
 			callbacks: {
 				signInSuccessWithAuthResult: () => {
 					// 로그인 성공 시 페이지 새로고침
-					window.location.reload();
+					if (typeof window !== 'undefined') {
+						window.location.reload();
+					}
 					return false;
 				},
 			},
 		};
 
 		// FirebaseUI 인스턴스 생성
-		if (!uiRef.current) {
+		if (!uiRef.current && firebaseui.auth) {
 			uiRef.current = new firebaseui.auth.AuthUI(auth);
 		}
 
 		// FirebaseUI 시작
-		if (uiRef.current.isPendingRedirect()) {
-			uiRef.current.start("#firebaseui-auth-container", uiConfig);
-		} else {
-			uiRef.current.start("#firebaseui-auth-container", uiConfig);
+		if (uiRef.current && typeof document !== 'undefined') {
+			const container = document.getElementById("firebaseui-auth-container");
+			if (container) {
+				if (uiRef.current.isPendingRedirect()) {
+					uiRef.current.start("#firebaseui-auth-container", uiConfig);
+				} else {
+					uiRef.current.start("#firebaseui-auth-container", uiConfig);
+				}
+			}
 		}
 
 		return () => {
@@ -47,7 +72,7 @@ export default function Login() {
 				uiRef.current.reset();
 			}
 		};
-	}, []);
+	}, [firebaseui]);
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -62,6 +87,9 @@ export default function Login() {
 				</div>
 				<div className="bg-white p-8 rounded-lg shadow-md">
 					<div id="firebaseui-auth-container"></div>
+					{!firebaseui && typeof window !== 'undefined' && (
+						<div className="text-center text-gray-500">로그인 컴포넌트를 로딩 중...</div>
+					)}
 				</div>
 			</div>
 		</div>

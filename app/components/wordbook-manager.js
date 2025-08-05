@@ -38,6 +38,21 @@ export default function WordbookManager({ wordbooks, onWordbooksChange }) {
     }
   };
 
+  const showAlert = (message) => {
+    if (typeof window !== 'undefined') {
+      alert(message);
+    } else {
+      console.log(message);
+    }
+  };
+
+  const showConfirm = (message) => {
+    if (typeof window !== 'undefined') {
+      return confirm(message);
+    }
+    return false;
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!user || !newWordbook.name.trim()) return;
@@ -48,18 +63,18 @@ export default function WordbookManager({ wordbooks, onWordbooksChange }) {
       setIsCreating(false);
       onWordbooksChange();
     } catch (error) {
-      alert(`단어장 생성 오류: ${error.message}`);
+      showAlert(`단어장 생성 오류: ${error.message}`);
     }
   };
 
   const handleDelete = async (wordbookId) => {
-    if (!confirm("단어장을 삭제하시겠습니까? 모든 단어가 삭제됩니다.")) return;
+    if (!showConfirm("단어장을 삭제하시겠습니까? 모든 단어가 삭제됩니다.")) return;
 
     try {
       await deleteWordbook(wordbookId, user.uid);
       onWordbooksChange();
     } catch (error) {
-      alert(`삭제 오류: ${error.message}`);
+      showAlert(`삭제 오류: ${error.message}`);
     }
   };
 
@@ -71,21 +86,21 @@ export default function WordbookManager({ wordbooks, onWordbooksChange }) {
       setCollaboratorEmail("");
       onWordbooksChange();
       loadCollaborators(wordbookId); // 협업자 목록 새로고침
-      alert("협업자가 추가되었습니다!");
+      showAlert("협업자가 추가되었습니다!");
     } catch (error) {
-      alert(`협업자 추가 오류: ${error.message}`);
+      showAlert(`협업자 추가 오류: ${error.message}`);
     }
   };
 
   const handleRemoveCollaborator = async (wordbookId, userEmail) => {
-    if (!confirm("이 사용자를 단어장에서 제거하시겠습니까?")) return;
+    if (!showConfirm("이 사용자를 단어장에서 제거하시겠습니까?")) return;
 
     try {
       await removeCollaborator(wordbookId, userEmail);
       onWordbooksChange();
       loadCollaborators(wordbookId); // 협업자 목록 새로고침
     } catch (error) {
-      alert(`협업자 제거 오류: ${error.message}`);
+      showAlert(`협업자 제거 오류: ${error.message}`);
     }
   };
 

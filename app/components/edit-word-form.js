@@ -25,6 +25,14 @@ export default function EditWordForm({ word, language, onWordUpdated, onCancel }
 	const { user } = useAuth();
 	const [editedWord, setEditedWord] = useState(word);
 
+	const showAlert = (message) => {
+		if (typeof window !== 'undefined') {
+			alert(message);
+		} else {
+			console.log(message);
+		}
+	};
+
 	useEffect(() => {
 		setEditedWord(word);
 	}, [word]);
@@ -59,7 +67,7 @@ export default function EditWordForm({ word, language, onWordUpdated, onCancel }
 			await updateWordInWordbook(updatedWord, word.wordbookId);
 			onWordUpdated();
 		} catch (error) {
-			alert(`단어 수정 오류: ${error.message}`);
+			showAlert(`단어 수정 오류: ${error.message}`);
 		}
 	};
 
