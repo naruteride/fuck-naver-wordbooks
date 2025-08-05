@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { addWord } from "@/lib/Firestore";
+import { useAuth } from "@/lib/AuthProvider";
 
 /**
  * @typedef {Object} AddWordFormProps
@@ -15,6 +16,7 @@ import { addWord } from "@/lib/Firestore";
  * @returns {JSX.Element}
  */
 export default function AddWordForm({ language, onWordAdded }) {
+	const { user } = useAuth();
 	const [isOpen, setIsOpen] = useState(false);
 	const [word, setWord] = useState({
 		spelling: "",
@@ -32,6 +34,8 @@ export default function AddWordForm({ language, onWordAdded }) {
 	 */
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		if (!user) return;
+		
 		const newWord = {
 			...(language == "english"
 				? { spelling: word.spelling, pronunciation: word.pronunciation }
@@ -42,7 +46,7 @@ export default function AddWordForm({ language, onWordAdded }) {
 			studyCount: 0,
 			lastStudiedAt: new Date(),
 		};
-		await addWord(newWord, language);
+		await addWord(newWord, language, user.uid);
 		setWord({
 			spelling: "",
 			kanji: "",

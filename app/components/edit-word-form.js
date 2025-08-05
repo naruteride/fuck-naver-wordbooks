@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { updateWord } from "@/lib/Firestore";
+import { useAuth } from "@/lib/AuthProvider";
 
 /**
  * @typedef {import("../lib/firestore").Word} Word
@@ -21,6 +22,7 @@ import { updateWord } from "@/lib/Firestore";
  * @returns {JSX.Element}
  */
 export default function EditWordForm({ word, language, onWordUpdated, onCancel }) {
+	const { user } = useAuth();
 	const [editedWord, setEditedWord] = useState(word);
 
 	useEffect(() => {
@@ -33,7 +35,8 @@ export default function EditWordForm({ word, language, onWordUpdated, onCancel }
 	 */
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		await updateWord(editedWord, language);
+		if (!user) return;
+		await updateWord(editedWord, language, user.uid);
 		onWordUpdated();
 	};
 
