@@ -15,7 +15,7 @@ import LogoutButton from "./components/logout-button";
  */
 
 export const metadata = {
-	title: "단어장",
+	title: "망할네이버단어장",
 	description: "영어와 일본어 단어를 학습하는 웹 애플리케이션",
 }
 
