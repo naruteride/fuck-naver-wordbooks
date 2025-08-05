@@ -6,8 +6,16 @@ import WordList from "@/app/components/word-list";
 import AddWordForm from "@/app/components/add-word-form";
 import EditWordForm from "@/app/components/edit-word-form";
 import UserInfo from "@/app/components/user-info";
-// import DataMigration from "@/app/components/data-migration";
-import { getWordsWithForgettingCurve, updateStudyCount, deleteWord, getWords } from "@/lib/Firestore";
+import WordbookManager from "@/app/components/wordbook-manager";
+import WordbookSelector from "@/app/components/wordbook-selector";
+import { 
+	getUserWordbooks, 
+	getWordsFromWordbooks, 
+	getWordsWithForgettingCurve, 
+	updateStudyCount, 
+	deleteWordFromWordbook, 
+	getUserWordStats 
+} from "@/lib/Firestore";
 import { useAuth } from "@/lib/AuthProvider";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import Tippy from "@tippyjs/react";
@@ -17,13 +25,11 @@ import "tippy.js/dist/tippy.css";
  * @typedef {"random" | "createdAt" | "studyCount" | "lastStudiedAt" | "alphabetical"} SortOption
  */
 
-/**
- * WordbookApp component
- * @returns {JSX.Element}
- */
 export default function WordbookApp() {
 	const { user } = useAuth();
 	const [activeTab, setActiveTab] = useState("english");
+	const [wordbooks, setWordbooks] = useState([]);
+	const [selectedWordbooks, setSelectedWordbooks] = useState([]);
 	const [words, setWords] = useState([]);
 	const [sortOption, setSortOption] = useState("random");
 	const [useForgetCurve, setUseForgetCurve] = useState(true);
@@ -31,31 +37,66 @@ export default function WordbookApp() {
 
 	useEffect(() => {
 		if (user) {
-			fetchWords();
+			loadWordbooks();
 		}
-	}, [activeTab, useForgetCurve, sortOption, user]);
+	}, [user]);
 
-	/**
-	 * Fetch words from the database and sort them
-	 */
-	async function fetchWords() {
-		if (!user) return;
-		
-		let fetchedWords;
-		if (useForgetCurve) {
-			fetchedWords = await getWordsWithForgettingCurve(activeTab, user.uid);
+	useEffect(() => {
+		if (user && selectedWordbooks.length > 0) {
+			fetchWords();
 		} else {
-			fetchedWords = await getWords(activeTab, user.uid);
+			setWords([]);
 		}
-		setWords(sortWords(fetchedWords, sortOption));
+	}, [activeTab, selectedWordbooks, useForgetCurve, sortOption, user]);
+
+	// 언어가 바뀔 때 선택된 단어장 초기화
+	useEffect(() => {
+		const currentLanguageWordbooks = wordbooks
+			.filter(wb => wb.language === activeTab)
+			.map(wb => wb.id);
+		setSelectedWordbooks(currentLanguageWordbooks);
+	}, [activeTab, wordbooks]);
+
+	async function loadWordbooks() {
+		try {
+			const userWordbooks = await getUserWordbooks(user.uid);
+			setWordbooks(userWordbooks);
+		} catch (error) {
+			console.error("단어장 로딩 오류:", error);
+		}
 	}
 
-	/**
-	 * Sort words based on the selected option
-	 * @param {import("@/lib/Firestore").Word[]} words - The words to sort
-	 * @param {SortOption} option - The sorting option
-	 * @returns {import("@/lib/Firestore").Word[]}
-	 */
+	async function fetchWords() {
+		if (!user || selectedWordbooks.length === 0) return;
+		
+		try {
+			let fetchedWords;
+			
+			if (useForgetCurve) {
+				fetchedWords = await getWordsWithForgettingCurve(selectedWordbooks, user.uid);
+			} else {
+				fetchedWords = await getWordsFromWordbooks(selectedWordbooks);
+				
+				// 일반 모드에서는 사용자의 학습 통계를 따로 가져와서 합침
+				const allWordsWithStats = [];
+				for (const word of fetchedWords) {
+					const stats = await getUserWordStats(word.wordbookId, user.uid);
+					const wordStat = stats[word.id] || { studyCount: 0, lastStudiedAt: new Date() };
+					allWordsWithStats.push({
+						...word,
+						studyCount: wordStat.studyCount,
+						lastStudiedAt: wordStat.lastStudiedAt,
+					});
+				}
+				fetchedWords = allWordsWithStats;
+			}
+			
+			setWords(sortWords(fetchedWords, sortOption));
+		} catch (error) {
+			console.error("단어 로딩 오류:", error);
+		}
+	}
+
 	function sortWords(words, option) {
 		switch (option) {
 			case "random":
@@ -68,8 +109,8 @@ export default function WordbookApp() {
 				return [...words].sort((a, b) => b.lastStudiedAt.getTime() - a.lastStudiedAt.getTime());
 			case "alphabetical":
 				return [...words].sort((a, b) => {
-					const aText = activeTab == "english" ? a.spelling : a.kanji;
-					const bText = activeTab == "english" ? b.spelling : b.kanji;
+					const aText = activeTab === "english" ? a.spelling : a.kanji;
+					const bText = activeTab === "english" ? b.spelling : b.kanji;
 					return aText.localeCompare(bText);
 				});
 			default:
@@ -77,33 +118,36 @@ export default function WordbookApp() {
 		}
 	}
 
-	/**
-	 * Handle studied word
-	 * @param {string} id - The word id
-	 * @param {boolean} remembered - Whether the word was remembered
-	 */
-	async function handleStudied(id, remembered) {
+	async function handleStudied(wordId, remembered) {
 		if (!user) return;
-		await updateStudyCount(id, activeTab, remembered, user.uid);
-		fetchWords();
-	}
-
-	/**
-	 * Handle word deletion
-	 * @param {string} id - The word id
-	 */
-	async function handleDelete(id) {
-		if (!user) return;
-		if (window.confirm("정말로 이 단어를 삭제하시겠습니까?")) {
-			await deleteWord(id, activeTab, user.uid);
+		
+		const word = words.find(w => w.id === wordId);
+		if (!word) return;
+		
+		try {
+			await updateStudyCount(wordId, word.wordbookId, remembered, user.uid);
 			fetchWords();
+		} catch (error) {
+			console.error("학습 기록 오류:", error);
 		}
 	}
 
-	/**
-	 * Handle word edit
-	 * @param {import("@/lib/Firestore").Word} word - The word to edit
-	 */
+	async function handleDelete(wordId) {
+		if (!user) return;
+		
+		const word = words.find(w => w.id === wordId);
+		if (!word) return;
+		
+		if (window.confirm("정말로 이 단어를 삭제하시겠습니까?")) {
+			try {
+				await deleteWordFromWordbook(wordId, word.wordbookId);
+				fetchWords();
+			} catch (error) {
+				console.error("단어 삭제 오류:", error);
+			}
+		}
+	}
+
 	function handleEdit(word) {
 		setEditingWord(word);
 	}
@@ -138,7 +182,7 @@ export default function WordbookApp() {
 	return (
 		<>
 			<UserInfo />
-			{/* <DataMigration /> */}
+			<WordbookManager wordbooks={wordbooks} onWordbooksChange={loadWordbooks} />
 			<Tabs onTabChange={setActiveTab} />
 			<div className="p-4">
 				{editingWord ? (
@@ -150,12 +194,24 @@ export default function WordbookApp() {
 					/>
 				) : (
 					<>
-						<AddWordForm language={activeTab} onWordAdded={fetchWords} />
-						<div className="mb-4 flex flex-col justify-center items-start gap-4">
+						<AddWordForm 
+							language={activeTab} 
+							selectedWordbooks={selectedWordbooks}
+							onWordAdded={fetchWords} 
+						/>
+						
+						<div className="mb-4 space-y-3">
+							<WordbookSelector
+								wordbooks={wordbooks}
+								selectedWordbooks={selectedWordbooks}
+								onSelectionChange={setSelectedWordbooks}
+								currentLanguage={activeTab}
+							/>
+							
 							<select
 								value={sortOption}
 								onChange={(e) => setSortOption(e.target.value)}
-								className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+								className="w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
 							>
 								<option value="random">랜덤</option>
 								<option value="createdAt">생성일</option>
@@ -163,7 +219,8 @@ export default function WordbookApp() {
 								<option value="lastStudiedAt">최근 학습일</option>
 								<option value="alphabetical">알파벳순</option>
 							</select>
-							<div className="flex items-center">
+							
+							<div className="flex items-center justify-between">
 								<label className="inline-flex items-center">
 									<input
 										type="checkbox"
@@ -180,18 +237,26 @@ export default function WordbookApp() {
 									arrow={true}
 									maxWidth={300}
 								>
-									<QuestionMarkCircleIcon className="h-5 w-5 text-gray-400 ml-2 cursor-help" />
+									<QuestionMarkCircleIcon className="h-5 w-5 text-gray-400 cursor-help" />
 								</Tippy>
 							</div>
+							
 							<p className="text-gray-600 text-sm">총 {words.length}개의 단어</p>
 						</div>
-						<WordList
-							words={words}
-							language={activeTab}
-							onStudied={handleStudied}
-							onEdit={handleEdit}
-							onDelete={handleDelete}
-						/>
+						
+						{selectedWordbooks.length === 0 ? (
+							<div className="text-center py-8 text-gray-500">
+								단어장을 선택하거나 새로 만들어주세요
+							</div>
+						) : (
+							<WordList
+								words={words}
+								language={activeTab}
+								onStudied={handleStudied}
+								onEdit={handleEdit}
+								onDelete={handleDelete}
+							/>
+						)}
 					</>
 				)}
 			</div>

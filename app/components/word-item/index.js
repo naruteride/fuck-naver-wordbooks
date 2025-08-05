@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import ActionButtons from "./action-buttons";
 import InfoItem from "./info-item";
 import ListDisplay from "./list-display";
-import ActionButtons from "./action-buttons";
+import UserStatsDisplay from "./user-stats-display";
 
 /**
- * @typedef {import("../lib/firestore").Word} Word
+ * @typedef {import("../../lib/Firestore").Word} Word
  */
 
 /**
@@ -24,6 +25,7 @@ import ActionButtons from "./action-buttons";
  * @param {WordItemProps} props
  * @returns {JSX.Element}
  */
+
 export default function WordItem({ word, language, onStudied, onEdit, onDelete }) {
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -36,7 +38,7 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 						className="flex items-center w-full text-left"
 					>
 						<p className="text-2xl font-medium text-gray-900 truncate mr-2">
-							{language == "english" ? word.spelling : word.kanji}
+							{language === "english" ? word.spelling : word.kanji}
 						</p>
 						{isOpen ? (
 							<ChevronUpIcon className="h-5 w-5 text-gray-400" />
@@ -45,26 +47,26 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 						)}
 					</button>
 					{!isOpen && (
-						<p className="text-sm text-gray-500">{word.examples[0]}</p>
+						<p className="text-sm text-gray-500">{Array.isArray(word.examples) ? word.examples[0] : word.examples}</p>
 					)}
 				</div>
 				{isOpen && (
 					<div className="my-4 space-y-2">
-						{language == "english" && (
+						{language === "english" && (
 							<>
 								<InfoItem label="발음" value={word.pronunciation} />
 								<ListDisplay title="뜻" items={word.meanings} />
 							</>
 						)}
-						{language == "japanese" && (
+						{language === "japanese" && (
 							<>
 								<InfoItem 
 									label="음독" 
-									value={word.onyomi?.join(", ")} 
+									value={Array.isArray(word.onyomi) ? word.onyomi.join(", ") : word.onyomi} 
 								/>
 								<InfoItem 
 									label="훈독" 
-									value={word.kunyomi?.join(", ")} 
+									value={Array.isArray(word.kunyomi) ? word.kunyomi.join(", ") : word.kunyomi} 
 								/>
 								<ListDisplay title="뜻" items={word.meanings} />
 							</>
@@ -74,15 +76,17 @@ export default function WordItem({ word, language, onStudied, onEdit, onDelete }
 							label="생성일" 
 							value={word.createdAt.toLocaleDateString()} 
 						/>
-						<InfoItem 
-							label="마지막 학습일" 
-							value={word.lastStudiedAt.toLocaleDateString()} 
+						
+						{/* 모든 사용자의 학습 통계 표시 */}
+						<UserStatsDisplay 
+							wordbookId={word.wordbookId}
+							wordId={word.id}
 						/>
 					</div>
 				)}
 				<ActionButtons
 					wordId={word.id}
-					studyCount={word.studyCount}
+					studyCount={word.studyCount || 0}
 					word={word}
 					onStudied={onStudied}
 					onEdit={onEdit}
