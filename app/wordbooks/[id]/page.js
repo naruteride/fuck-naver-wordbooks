@@ -8,6 +8,8 @@ import {
 	addWordToWordbook,
 	getWordbookName,
 	getWordsFromWordbook,
+	getUserWordStats,
+	updateStudyCount,
 } from "../../../lib/Firestore";
 import dynamic from "next/dynamic";
 
@@ -22,6 +24,8 @@ export default function WordbookDetailPage() {
 	const [loading, setLoading] = useState(true);
 	const [list, setList] = useState([]);
 	const [error, setError] = useState("");
+	const [stats, setStats] = useState({}); // { [wordId]: { studyCount, lastStudiedAt } }
+	const [filter, setFilter] = useState("none"); // none | forgetting | random | asc
 
 	// 공통 필드
 	const [meanings, setMeanings] = useState("");
@@ -44,6 +48,44 @@ export default function WordbookDetailPage() {
 		return "english";
 	}, [list]);
 
+	const displayList = useMemo(() => {
+		let items = [...list];
+		if (filter === "forgetting") {
+			items = items.filter((w) => shouldShowNow(w, stats));
+		}
+		if (filter === "asc") {
+			items.sort(compareAsc(language));
+		} else if (filter === "random") {
+			items.sort(compareRandomStable);
+		}
+		return items;
+	}, [list, stats, filter, language]);
+
+function compareAsc(language) {
+    return (a, b) => {
+        const getKey = (w) => (language === "english" ? (w.spelling || "") : (w.kanji || ""));
+        return getKey(a).localeCompare(getKey(b));
+    };
+}
+
+function compareRandomStable() {
+    return Math.random() - 0.5;
+}
+
+function shouldShowNow(word, stats) {
+    const s = stats[word.id];
+    if (!s) return true;
+    const count = s.studyCount || 0;
+    const last = s.lastStudiedAt ? new Date(s.lastStudiedAt) : new Date();
+    const diffDays = (Date.now() - last.getTime()) / (1000 * 60 * 60 * 24);
+    if (count === 0) return true;
+    if (count === 1) return diffDays >= 1;
+    if (count === 2) return diffDays >= 2;
+    if (count === 3) return diffDays >= 3;
+    if (count === 4) return diffDays >= 7;
+    return diffDays >= 30;
+}
+
 	useEffect(() => {
 		if (!wordbookId) return;
 		(async () => {
@@ -52,20 +94,25 @@ export default function WordbookDetailPage() {
 				setName(title);
 				const words = await getWordsFromWordbook(wordbookId);
 				setList(words);
+				if (user) {
+					const s = await getUserWordStats(wordbookId, user.uid);
+					setStats(s);
+				}
 			} catch (e) {
 				setError("단어장을 불러오지 못했습니다.");
 			} finally {
 				setLoading(false);
 			}
 		})();
-	}, [wordbookId]);
+	}, [wordbookId, user]);
 
 	async function handleAddWord(e) {
 		e.preventDefault();
 		setError("");
 		try {
+			let newId;
 			if (language === "english") {
-				await addWordToWordbook(
+				newId = await addWordToWordbook(
 					{
 						spelling: spelling || undefined,
 						pronunciation: pronunciation || undefined,
@@ -75,8 +122,20 @@ export default function WordbookDetailPage() {
 					wordbookId,
 					user.uid
 				);
+				setList((prev) => [
+					{
+						id: newId,
+						spelling: spelling || undefined,
+						pronunciation: pronunciation || undefined,
+						meanings: splitLines(meanings),
+						examples: splitLines(examples),
+						createdBy: user.uid,
+						createdAt: new Date(),
+					},
+					...prev,
+				]);
 			} else {
-				await addWordToWordbook(
+				newId = await addWordToWordbook(
 					{
 						kanji: kanji || undefined,
 						onyomi: splitLines(onyomi),
@@ -87,9 +146,22 @@ export default function WordbookDetailPage() {
 					wordbookId,
 					user.uid
 				);
+				setList((prev) => [
+					{
+						id: newId,
+						kanji: kanji || undefined,
+						onyomi: splitLines(onyomi),
+						kunyomi: splitLines(kunyomi),
+						meanings: splitLines(meanings),
+						examples: splitLines(examples),
+						createdBy: user.uid,
+						createdAt: new Date(),
+					},
+					...prev,
+				]);
 			}
 
-			// reset and refresh list
+			// reset inputs
 			setSpelling("");
 			setPronunciation("");
 			setKanji("");
@@ -97,11 +169,24 @@ export default function WordbookDetailPage() {
 			setKunyomi("");
 			setMeanings("");
 			setExamples("");
-
-			const words = await getWordsFromWordbook(wordbookId);
-			setList(words);
 		} catch (e) {
 			setError("단어를 추가하지 못했습니다.");
+		}
+	}
+
+	async function handleRemember(wordId) {
+		try {
+			// 낙관적 업데이트로 즉시 반영 후 Firestore에 기록
+			setStats((prev) => ({
+				...prev,
+				[wordId]: {
+					studyCount: (prev[wordId]?.studyCount || 0) + 1,
+					lastStudiedAt: new Date(),
+				},
+			}));
+			await updateStudyCount(wordId, wordbookId, true, user.uid);
+		} catch (e) {
+			setError("학습 기록을 저장하지 못했습니다.");
 		}
 	}
 
@@ -179,15 +264,28 @@ export default function WordbookDetailPage() {
 
 			<section className="bg-white rounded shadow p-4">
 				<h2 className="font-bold mb-3">단어 목록</h2>
+				<div className="mb-3 flex items-center gap-2">
+					<label className="text-sm text-gray-700">필터</label>
+					<select
+						className="border rounded px-2 py-1"
+						value={filter}
+						onChange={(e) => setFilter(e.target.value)}
+					>
+						<option value="none">전체</option>
+						<option value="forgetting">망각곡선</option>
+						<option value="random">랜덤</option>
+						<option value="asc">오름차순</option>
+					</select>
+				</div>
 				{loading ? (
 					<p className="text-gray-600">불러오는 중...</p>
 				) : list.length === 0 ? (
 					<p className="text-gray-600">아직 단어가 없습니다. 위에서 추가하세요.</p>
 				) : (
 					<ul className="divide-y">
-						{list.map((w) => (
+						{displayList.map((w) => (
 							<li key={w.id} className="py-3">
-								<WordRow w={w} />
+								<WordRow w={w} stat={stats[w.id]} onRemember={() => handleRemember(w.id)} />
 							</li>
 						))}
 					</ul>
@@ -199,21 +297,25 @@ export default function WordbookDetailPage() {
 	);
 }
 
-function WordRow({ w }) {
+function WordRow({ w, stat, onRemember }) {
 	if (w.spelling) {
 		return (
-			<div>
+			<div className="flex flex-col items-start justify-between gap-4">
 				<div className="font-medium">{w.spelling}</div>
 				{w.pronunciation && (
-					<div className="text-sm text-gray-600">{w.pronunciation}</div>
+					<div className="text-sm text-gray-600">발음: {w.pronunciation}</div>
 				)}
 				<WordCommon w={w} />
+				<div className="ml-auto flex items-center gap-3">
+					<StudyInfo stat={stat} />
+					<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white">외움</button>
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div>
+		<div className="flex flex-col gap-1">
 			<div className="font-medium">{w.kanji}</div>
 			{(w.onyomi?.length || 0) > 0 && (
 				<div className="text-sm text-gray-600">음독: {w.onyomi.join(", ")}</div>
@@ -221,6 +323,10 @@ function WordRow({ w }) {
 			{(w.kunyomi?.length || 0) > 0 && (
 				<div className="text-sm text-gray-600">훈독: {w.kunyomi.join(", ")}</div>
 			)}
+			<div className="flex items-center gap-3">
+				<StudyInfo stat={stat} />
+				<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white">외움</button>
+			</div>
 			<WordCommon w={w} />
 		</div>
 	);
@@ -237,6 +343,31 @@ function WordCommon({ w }) {
 			)}
 		</div>
 	);
+}
+
+function StudyInfo({ stat }) {
+	const count = stat?.studyCount ?? 0;
+	const last = stat?.lastStudiedAt
+		? formatDate(stat.lastStudiedAt)
+		: "-";
+	return (
+		<div className="text-sm text-gray-700">
+			<span>외운 횟수: {count}</span>
+			<span className="ml-2">마지막: {last}</span>
+		</div>
+	);
+}
+
+function formatDate(value) {
+	try {
+		const d = value instanceof Date ? value : new Date(value);
+		const yyyy = d.getFullYear();
+		const mm = String(d.getMonth() + 1).padStart(2, "0");
+		const dd = String(d.getDate()).padStart(2, "0");
+		return `${yyyy}-${mm}-${dd}`;
+	} catch {
+		return "-";
+	}
 }
 
 function splitLines(value) {
