@@ -437,6 +437,7 @@ export default function WordbookDetailPage() {
 									isRevealed={!!revealed[w.id]}
 									onToggleReveal={() => toggleReveal(w.id)}
 									onEdit={(event) => handleEditOpen(event, w)}
+									deleteWord={() => deleteWord(w.id)}
 								/>
 							</li>
 						))}
@@ -473,7 +474,7 @@ export default function WordbookDetailPage() {
 	);
 }
 
-function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, onNeedAllStats, isRevealed, onToggleReveal, onEdit }) {
+function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, onNeedAllStats, isRevealed, onToggleReveal, onEdit, deleteWord }) {
 	if (w.spelling) {
 		return (
 			<div onClick={onToggleReveal} className="flex flex-col items-start justify-between gap-4 cursor-pointer">
@@ -489,10 +490,11 @@ function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, o
 				)}
 				<WordCommon w={w} revealed={isRevealed} />
 				<div className="flex items-center justify-between w-full">
-					<TrashIcon color="red" onClick={onForget} className="size-6" />
+					<TrashIcon color="red" onClick={deleteWord} className="size-6" />
 					<div className="flex items-center gap-3">
 						<StudyInfo stat={stat} />
 						<PencilSquareIcon className="size-6 cursor-pointer" onClick={onEdit} />
+						<button onClick={onForget} className="text-sm px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">잊음</button>
 						<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
 					</div>
 				</div>
@@ -511,10 +513,11 @@ function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, o
 				<div className="text-sm text-gray-600">훈독: {w.kunyomi.join(", ")}</div>
 			)}
 			<div className="flex items-center justify-between w-full">
-				<TrashIcon color="red" onClick={onForget} className="size-6" />
+				<TrashIcon color="red" onClick={deleteWord} className="size-6" />
 				<div className="flex items-center gap-3">
 					<StudyInfo stat={stat} />
 					<PencilSquareIcon className="size-6 cursor-pointer" onClick={onEdit} />
+					<button onClick={onForget} className="text-sm px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">잊음</button>
 					<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
 				</div>
 			</div>
@@ -526,52 +529,52 @@ function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, o
 
 // Render edit modal at the end of page
 function EditModal({ open, onClose, language, values, setters, onSave }) {
-    if (!open) return null;
-    const {
-        editSpelling,
-        editPronunciation,
-        editMeanings,
-        editExamples,
-        editKanji,
-        editOnyomi,
-        editKunyomi,
-    } = values;
-    const {
-        setEditSpelling,
-        setEditPronunciation,
-        setEditMeanings,
-        setEditExamples,
-        setEditKanji,
-        setEditOnyomi,
-        setEditKunyomi,
-    } = setters;
-    return (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50" onClick={onClose}>
-            <div className="bg-white rounded shadow w-full max-w-lg p-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="font-bold mb-3">단어 수정</h3>
-                <form onSubmit={onSave} className="space-y-2">
-                    {language === "english" ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <input className="border rounded px-3 py-2" placeholder="스펠링" value={editSpelling} onChange={(e) => setEditSpelling(e.target.value)} />
-                            <input className="border rounded px-3 py-2" placeholder="발음" value={editPronunciation} onChange={(e) => setEditPronunciation(e.target.value)} />
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <input className="border rounded px-3 py-2" placeholder="한자" value={editKanji} onChange={(e) => setEditKanji(e.target.value)} />
-                            <textarea className="border rounded px-3 py-2" placeholder="음독 (줄바꿈)" rows={2} value={editOnyomi} onChange={(e) => setEditOnyomi(e.target.value)} />
-                            <textarea className="border rounded px-3 py-2" placeholder="훈독 (줄바꿈)" rows={2} value={editKunyomi} onChange={(e) => setEditKunyomi(e.target.value)} />
-                        </div>
-                    )}
-                    <textarea className="border rounded px-3 py-2 w-full" placeholder="뜻 (줄바꿈)" rows={3} value={editMeanings} onChange={(e) => setEditMeanings(e.target.value)} />
-                    <textarea className="border rounded px-3 py-2 w-full" placeholder="예문 (줄바꿈)" rows={3} value={editExamples} onChange={(e) => setEditExamples(e.target.value)} />
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button type="button" onClick={onClose} className="px-3 py-1 rounded border">취소</button>
-                        <button type="submit" className="px-3 py-1 rounded bg-blue-600 text-white">저장</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
+	if (!open) return null;
+	const {
+		editSpelling,
+		editPronunciation,
+		editMeanings,
+		editExamples,
+		editKanji,
+		editOnyomi,
+		editKunyomi,
+	} = values;
+	const {
+		setEditSpelling,
+		setEditPronunciation,
+		setEditMeanings,
+		setEditExamples,
+		setEditKanji,
+		setEditOnyomi,
+		setEditKunyomi,
+	} = setters;
+	return (
+		<div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50" onClick={onClose}>
+			<div className="bg-white rounded shadow w-full max-w-lg p-4" onClick={(e) => e.stopPropagation()}>
+				<h3 className="font-bold mb-3">단어 수정</h3>
+				<form onSubmit={onSave} className="space-y-2">
+					{language === "english" ? (
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+							<input className="border rounded px-3 py-2" placeholder="스펠링" value={editSpelling} onChange={(e) => setEditSpelling(e.target.value)} />
+							<input className="border rounded px-3 py-2" placeholder="발음" value={editPronunciation} onChange={(e) => setEditPronunciation(e.target.value)} />
+						</div>
+					) : (
+						<div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+							<input className="border rounded px-3 py-2" placeholder="한자" value={editKanji} onChange={(e) => setEditKanji(e.target.value)} />
+							<textarea className="border rounded px-3 py-2" placeholder="음독 (줄바꿈)" rows={2} value={editOnyomi} onChange={(e) => setEditOnyomi(e.target.value)} />
+							<textarea className="border rounded px-3 py-2" placeholder="훈독 (줄바꿈)" rows={2} value={editKunyomi} onChange={(e) => setEditKunyomi(e.target.value)} />
+						</div>
+					)}
+					<textarea className="border rounded px-3 py-2 w-full" placeholder="뜻 (줄바꿈)" rows={3} value={editMeanings} onChange={(e) => setEditMeanings(e.target.value)} />
+					<textarea className="border rounded px-3 py-2 w-full" placeholder="예문 (줄바꿈)" rows={3} value={editExamples} onChange={(e) => setEditExamples(e.target.value)} />
+					<div className="flex justify-end gap-2 pt-2">
+						<button type="button" onClick={onClose} className="px-3 py-1 rounded border">취소</button>
+						<button type="submit" className="px-3 py-1 rounded bg-blue-600 text-white">저장</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
 }
 
 function WordCommon({ w, revealed }) {
