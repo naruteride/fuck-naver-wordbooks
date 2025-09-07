@@ -32,6 +32,7 @@ export default function WordbookDetailPage() {
 	const [useForgetting, setUseForgetting] = useState(false);
 	const [sort, setSort] = useState("none"); // none | random | asc
 	const [revealed, setRevealed] = useState({}); // { [wordId]: boolean }
+	const [isAllStatsVisible, setIsAllStatsVisible] = useState(false); // boolean
 
 	// 공통 필드
 	const [meanings, setMeanings] = useState("");
@@ -203,8 +204,11 @@ function shouldShowNow(word, stats) {
 					lastStudiedAt: new Date(),
 				},
 			}));
+			// 협업자 섹션은 사용자가 요청한 경우에만 표시되어야 하므로,
+			// allStats에는 로딩 여부 플래그가 존재할 때만 값을 유지한다.
 			setAllStats((prev) => {
 				const current = prev[wordId] || {};
+				if (!current.__loaded) return prev; // 아직 로드 안 한 경우 표시 변화 방지
 				return {
 					...prev,
 					[wordId]: {
@@ -224,12 +228,8 @@ function shouldShowNow(word, stats) {
 
 	async function ensureAllStats(wordId) {
 		if (allStats[wordId]) return;
-		try {
-			const s = await getAllUserWordStats(wordbookId, wordId);
-			setAllStats((prev) => ({ ...prev, [wordId]: s }));
-		} catch {
-			// ignore
-		}
+		const s = await getAllUserWordStats(wordbookId, wordId);
+		setAllStats((prev) => ({ ...prev, [wordId]: { ...s, __loaded: true } }));
 	}
 
 	function toggleReveal(wordId) {
@@ -439,7 +439,7 @@ function StudyInfo({ stat }) {
 }
 
 function AllUsersStats({ collaborators, perUserStats, onNeedAllStats }) {
-    const hasStats = perUserStats && Object.keys(perUserStats).length > 0;
+    const hasStats = perUserStats && perUserStats.__loaded;
     return (
         <div className="mt-2">
             {!hasStats ? (
