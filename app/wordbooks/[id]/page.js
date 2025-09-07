@@ -13,6 +13,7 @@ import {
 	getAllUserWordStats,
 	getWordbookCollaborators,
 	updateWordInWordbook,
+	deleteWordFromWordbook,
 } from "../../../lib/Firestore";
 import dynamic from "next/dynamic";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -277,6 +278,32 @@ export default function WordbookDetailPage() {
 		setRevealed((prev) => ({ ...prev, [wordId]: !prev[wordId] }));
 	}
 
+	async function handleDeleteWord(event, wordId) {
+		event.stopPropagation();
+		if (!confirm("이 단어를 정말 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) return;
+		try {
+			await deleteWordFromWordbook(wordId, wordbookId);
+			setList((prev) => prev.filter((w) => w.id !== wordId));
+			setStats((prev) => {
+				const clone = { ...prev };
+				delete clone[wordId];
+				return clone;
+			});
+			setAllStats((prev) => {
+				const clone = { ...prev };
+				delete clone[wordId];
+				return clone;
+			});
+			setRevealed((prev) => {
+				const clone = { ...prev };
+				delete clone[wordId];
+				return clone;
+			});
+		} catch (e) {
+			setError("삭제에 실패했습니다.");
+		}
+	}
+
 	function handleEditOpen(event, w) {
 		event.stopPropagation();
 		setEditingId(w.id);
@@ -437,7 +464,7 @@ export default function WordbookDetailPage() {
 									isRevealed={!!revealed[w.id]}
 									onToggleReveal={() => toggleReveal(w.id)}
 									onEdit={(event) => handleEditOpen(event, w)}
-									deleteWord={() => deleteWord(w.id)}
+									deleteWord={(event) => handleDeleteWord(event, w.id)}
 								/>
 							</li>
 						))}
@@ -490,9 +517,11 @@ function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, o
 				)}
 				<WordCommon w={w} revealed={isRevealed} />
 				<div className="flex items-center justify-between w-full">
-					<TrashIcon color="red" onClick={deleteWord} className="size-6" />
 					<div className="flex items-center gap-3">
+						<TrashIcon color="red" onClick={deleteWord} className="size-6" />
 						<StudyInfo stat={stat} />
+					</div>
+					<div className="flex items-center gap-3">
 						<PencilSquareIcon className="size-6 cursor-pointer" onClick={onEdit} />
 						<button onClick={onForget} className="text-sm px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">잊음</button>
 						<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
@@ -513,7 +542,10 @@ function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, o
 				<div className="text-sm text-gray-600">훈독: {w.kunyomi.join(", ")}</div>
 			)}
 			<div className="flex items-center justify-between w-full">
-				<TrashIcon color="red" onClick={deleteWord} className="size-6" />
+				<div className="flex items-center gap-3">
+					<TrashIcon color="red" onClick={deleteWord} className="size-6" />
+					<StudyInfo stat={stat} />
+				</div>
 				<div className="flex items-center gap-3">
 					<StudyInfo stat={stat} />
 					<PencilSquareIcon className="size-6 cursor-pointer" onClick={onEdit} />
@@ -603,9 +635,9 @@ function StudyInfo({ stat }) {
 		? formatDate(stat.lastStudiedAt)
 		: "-";
 	return (
-		<div className="text-sm text-gray-700">
+		<div className="text-xs flex flex-col text-gray-700">
 			<span>외운 횟수: {count}</span>
-			<span className="ml-2">마지막: {last}</span>
+			<span>마지막: {last}</span>
 		</div>
 	);
 }
