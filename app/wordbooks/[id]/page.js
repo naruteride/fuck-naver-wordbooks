@@ -14,6 +14,7 @@ import {
 	getWordbookCollaborators,
 } from "../../../lib/Firestore";
 import dynamic from "next/dynamic";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 const CollaboratorsSection = dynamic(() => import("./collaborators"), { ssr: false });
 
@@ -68,30 +69,30 @@ export default function WordbookDetailPage() {
 		return items;
 	}, [list, stats, useForgetting, sort, language]);
 
-function compareAsc(language) {
-    return (a, b) => {
-        const getKey = (w) => (language === "english" ? (w.spelling || "") : (w.kanji || ""));
-        return getKey(a).localeCompare(getKey(b));
-    };
-}
+	function compareAsc(language) {
+		return (a, b) => {
+			const getKey = (w) => (language === "english" ? (w.spelling || "") : (w.kanji || ""));
+			return getKey(a).localeCompare(getKey(b));
+		};
+	}
 
-function compareRandomStable() {
-    return Math.random() - 0.5;
-}
+	function compareRandomStable() {
+		return Math.random() - 0.5;
+	}
 
-function shouldShowNow(word, stats) {
-    const s = stats[word.id];
-    if (!s) return true;
-    const count = s.studyCount || 0;
-    const last = s.lastStudiedAt ? new Date(s.lastStudiedAt) : new Date();
-    const diffDays = (Date.now() - last.getTime()) / (1000 * 60 * 60 * 24);
-    if (count === 0) return true;
-    if (count === 1) return diffDays >= 1;
-    if (count === 2) return diffDays >= 2;
-    if (count === 3) return diffDays >= 3;
-    if (count === 4) return diffDays >= 7;
-    return diffDays >= 30;
-}
+	function shouldShowNow(word, stats) {
+		const s = stats[word.id];
+		if (!s) return true;
+		const count = s.studyCount || 0;
+		const last = s.lastStudiedAt ? new Date(s.lastStudiedAt) : new Date();
+		const diffDays = (Date.now() - last.getTime()) / (1000 * 60 * 60 * 24);
+		if (count === 0) return true;
+		if (count === 1) return diffDays >= 1;
+		if (count === 2) return diffDays >= 2;
+		if (count === 3) return diffDays >= 3;
+		if (count === 4) return diffDays >= 7;
+		return diffDays >= 30;
+	}
 
 	useEffect(() => {
 		if (!wordbookId) return;
@@ -226,36 +227,36 @@ function shouldShowNow(word, stats) {
 		}
 	}
 
-async function handleForget(event, wordId) {
-	event.stopPropagation();
-	if (!confirm("정말 이 단어의 외운 횟수를 0으로 초기화할까요?")) return;
-	try {
-		setStats((prev) => ({
-			...prev,
-			[wordId]: {
-				studyCount: 0,
-				lastStudiedAt: new Date(),
-			},
-		}));
-		setAllStats((prev) => {
-			const current = prev[wordId] || {};
-			if (!current.__loaded) return prev;
-			return {
+	async function handleForget(event, wordId) {
+		event.stopPropagation();
+		if (!confirm("정말 이 단어의 외운 횟수를 0으로 초기화할까요?")) return;
+		try {
+			setStats((prev) => ({
 				...prev,
 				[wordId]: {
-					...current,
-					[user.uid]: {
-						studyCount: 0,
-						lastStudiedAt: new Date(),
-					},
+					studyCount: 0,
+					lastStudiedAt: new Date(),
 				},
-			};
-		});
-		await updateStudyCount(wordId, wordbookId, false, user.uid);
-	} catch (e) {
-		setError("초기화에 실패했습니다.");
+			}));
+			setAllStats((prev) => {
+				const current = prev[wordId] || {};
+				if (!current.__loaded) return prev;
+				return {
+					...prev,
+					[wordId]: {
+						...current,
+						[user.uid]: {
+							studyCount: 0,
+							lastStudiedAt: new Date(),
+						},
+					},
+				};
+			});
+			await updateStudyCount(wordId, wordbookId, false, user.uid);
+		} catch (e) {
+			setError("초기화에 실패했습니다.");
+		}
 	}
-}
 
 	async function ensureAllStats(wordId) {
 		if (allStats[wordId]) return;
@@ -382,6 +383,7 @@ async function handleForget(event, wordId) {
 									onNeedAllStats={() => ensureAllStats(w.id)}
 									isRevealed={!!revealed[w.id]}
 									onToggleReveal={() => toggleReveal(w.id)}
+									onEdit={() => handleEdit(w.id)}
 								/>
 							</li>
 						))}
@@ -394,7 +396,7 @@ async function handleForget(event, wordId) {
 	);
 }
 
-function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, onNeedAllStats, isRevealed, onToggleReveal }) {
+function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, onNeedAllStats, isRevealed, onToggleReveal, onEdit }) {
 	if (w.spelling) {
 		return (
 			<div onClick={onToggleReveal} className="flex flex-col items-start justify-between gap-4 cursor-pointer">
@@ -409,10 +411,13 @@ function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, o
 					</div>
 				)}
 				<WordCommon w={w} revealed={isRevealed} />
-				<div className="ml-auto flex items-center gap-3">
-					<StudyInfo stat={stat} />
-					<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
-					<button onClick={onForget} className="text-sm px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">잊음</button>
+				<div className="flex items-center justify-between w-full">
+					<TrashIcon color="red" onClick={onForget} className="size-6" />
+					<div className="flex items-center gap-3">
+						<StudyInfo stat={stat} />
+						<PencilSquareIcon className="size-6" onClick={onEdit} />
+						<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
+					</div>
 				</div>
 				<AllUsersStats collaborators={collaborators} perUserStats={perUserStats} onNeedAllStats={onNeedAllStats} />
 			</div>
@@ -428,10 +433,13 @@ function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, o
 			{(w.kunyomi?.length || 0) > 0 && (
 				<div className="text-sm text-gray-600">훈독: {w.kunyomi.join(", ")}</div>
 			)}
-			<div className="flex items-center gap-3">
-				<StudyInfo stat={stat} />
-				<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
-				<button onClick={onForget} className="text-sm px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">잊음</button>
+			<div className="flex items-center justify-between w-full">
+				<TrashIcon color="red" onClick={onForget} className="size-6" />
+				<div className="flex items-center gap-3">
+					<StudyInfo stat={stat} />
+					<PencilSquareIcon className="size-6" onClick={onEdit} />
+					<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
+				</div>
 			</div>
 			<WordCommon w={w} revealed={isRevealed} />
 			<AllUsersStats collaborators={collaborators} perUserStats={perUserStats} onNeedAllStats={onNeedAllStats} />
@@ -473,29 +481,29 @@ function StudyInfo({ stat }) {
 }
 
 function AllUsersStats({ collaborators, perUserStats, onNeedAllStats }) {
-    const hasStats = perUserStats && perUserStats.__loaded;
-    return (
-        <div className="mt-2">
-            {!hasStats ? (
-                <button onClick={onNeedAllStats} className="text-xs text-blue-600 underline">협업자 학습기록 보기</button>
-            ) : (
-                <ul className="mt-1 grid grid-cols-1 gap-1">
-                    {collaborators.map((c) => {
-                        const s = perUserStats[c.id];
-                        const count = s?.studyCount ?? 0;
-                        const last = s?.lastStudiedAt ? formatDate(s.lastStudiedAt) : "-";
-                        return (
-                            <li key={c.id} className="text-xs text-gray-700">
-                                <span className="font-medium">{c.displayName || c.email}</span>
-                                <span className="ml-2">횟수 {count}</span>
-                                <span className="ml-2">마지막 {last}</span>
-                            </li>
-                        );
-                    })}
-                </ul>
-            )}
-        </div>
-    );
+	const hasStats = perUserStats && perUserStats.__loaded;
+	return (
+		<div className="mt-2">
+			{!hasStats ? (
+				<button onClick={onNeedAllStats} className="text-xs text-blue-600 underline">협업자 학습기록 보기</button>
+			) : (
+				<ul className="mt-1 grid grid-cols-1 gap-1">
+					{collaborators.map((c) => {
+						const s = perUserStats[c.id];
+						const count = s?.studyCount ?? 0;
+						const last = s?.lastStudiedAt ? formatDate(s.lastStudiedAt) : "-";
+						return (
+							<li key={c.id} className="text-xs text-gray-700">
+								<span className="font-medium">{c.displayName || c.email}</span>
+								<span className="ml-2">횟수 {count}</span>
+								<span className="ml-2">마지막 {last}</span>
+							</li>
+						);
+					})}
+				</ul>
+			)}
+		</div>
+	);
 }
 
 function formatDate(value) {
