@@ -68,7 +68,7 @@ function LoginCard() {
 	return (
 		<div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
 			<div className="w-full max-w-sm bg-white rounded-lg shadow p-6">
-				<h1 className="text-xl font-bold text-gray-900 mb-4 text-center">로그인</h1>
+				<h1 className="text-xl font-bold text-gray-900 mb-4 text-center">{mode === "login" ? "로그인" : "회원가입"}</h1>
 				<form onSubmit={handleEmailSubmit} className="space-y-3">
 					<label className="block">
 						<span className="block text-sm text-gray-700">이메일</span>
