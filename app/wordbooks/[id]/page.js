@@ -226,6 +226,37 @@ function shouldShowNow(word, stats) {
 		}
 	}
 
+async function handleForget(event, wordId) {
+	event.stopPropagation();
+	if (!confirm("정말 이 단어의 외운 횟수를 0으로 초기화할까요?")) return;
+	try {
+		setStats((prev) => ({
+			...prev,
+			[wordId]: {
+				studyCount: 0,
+				lastStudiedAt: new Date(),
+			},
+		}));
+		setAllStats((prev) => {
+			const current = prev[wordId] || {};
+			if (!current.__loaded) return prev;
+			return {
+				...prev,
+				[wordId]: {
+					...current,
+					[user.uid]: {
+						studyCount: 0,
+						lastStudiedAt: new Date(),
+					},
+				},
+			};
+		});
+		await updateStudyCount(wordId, wordbookId, false, user.uid);
+	} catch (e) {
+		setError("초기화에 실패했습니다.");
+	}
+}
+
 	async function ensureAllStats(wordId) {
 		if (allStats[wordId]) return;
 		const s = await getAllUserWordStats(wordbookId, wordId);
@@ -345,6 +376,7 @@ function shouldShowNow(word, stats) {
 									w={w}
 									stat={stats[w.id]}
 									onRemember={(event) => handleRemember(event, w.id)}
+									onForget={(event) => handleForget(event, w.id)}
 									collaborators={collaborators}
 									perUserStats={allStats[w.id]}
 									onNeedAllStats={() => ensureAllStats(w.id)}
@@ -362,7 +394,7 @@ function shouldShowNow(word, stats) {
 	);
 }
 
-function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllStats, isRevealed, onToggleReveal }) {
+function WordRow({ w, stat, onRemember, onForget, collaborators, perUserStats, onNeedAllStats, isRevealed, onToggleReveal }) {
 	if (w.spelling) {
 		return (
 			<div onClick={onToggleReveal} className="flex flex-col items-start justify-between gap-4 cursor-pointer">
@@ -380,6 +412,7 @@ function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllSt
 				<div className="ml-auto flex items-center gap-3">
 					<StudyInfo stat={stat} />
 					<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
+					<button onClick={onForget} className="text-sm px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">잊음</button>
 				</div>
 				<AllUsersStats collaborators={collaborators} perUserStats={perUserStats} onNeedAllStats={onNeedAllStats} />
 			</div>
@@ -398,6 +431,7 @@ function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllSt
 			<div className="flex items-center gap-3">
 				<StudyInfo stat={stat} />
 				<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
+				<button onClick={onForget} className="text-sm px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">잊음</button>
 			</div>
 			<WordCommon w={w} revealed={isRevealed} />
 			<AllUsersStats collaborators={collaborators} perUserStats={perUserStats} onNeedAllStats={onNeedAllStats} />
