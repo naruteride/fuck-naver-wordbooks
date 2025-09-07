@@ -25,7 +25,8 @@ export default function WordbookDetailPage() {
 	const [list, setList] = useState([]);
 	const [error, setError] = useState("");
 	const [stats, setStats] = useState({}); // { [wordId]: { studyCount, lastStudiedAt } }
-	const [filter, setFilter] = useState("none"); // none | forgetting | random | asc
+	const [useForgetting, setUseForgetting] = useState(false);
+	const [sort, setSort] = useState("none"); // none | random | asc
 
 	// 공통 필드
 	const [meanings, setMeanings] = useState("");
@@ -50,16 +51,16 @@ export default function WordbookDetailPage() {
 
 	const displayList = useMemo(() => {
 		let items = [...list];
-		if (filter === "forgetting") {
+		if (useForgetting) {
 			items = items.filter((w) => shouldShowNow(w, stats));
 		}
-		if (filter === "asc") {
+		if (sort === "asc") {
 			items.sort(compareAsc(language));
-		} else if (filter === "random") {
+		} else if (sort === "random") {
 			items.sort(compareRandomStable);
 		}
 		return items;
-	}, [list, stats, filter, language]);
+	}, [list, stats, useForgetting, sort, language]);
 
 function compareAsc(language) {
     return (a, b) => {
@@ -264,18 +265,28 @@ function shouldShowNow(word, stats) {
 
 			<section className="bg-white rounded shadow p-4">
 				<h2 className="font-bold mb-3">단어 목록</h2>
-				<div className="mb-3 flex items-center gap-2">
-					<label className="text-sm text-gray-700">필터</label>
-					<select
-						className="border rounded px-2 py-1"
-						value={filter}
-						onChange={(e) => setFilter(e.target.value)}
-					>
-						<option value="none">전체</option>
-						<option value="forgetting">망각곡선</option>
-						<option value="random">랜덤</option>
-						<option value="asc">오름차순</option>
-					</select>
+				<div className="mb-3 flex items-center gap-4 flex-wrap">
+					<label className="inline-flex items-center gap-2 text-sm text-gray-700">
+						<input
+							type="checkbox"
+							checked={useForgetting}
+							onChange={(e) => setUseForgetting(e.target.checked)}
+							className="h-4 w-4"
+						/>
+						<span>망각곡선 적용</span>
+					</label>
+					<div className="inline-flex items-center gap-2">
+						<label className="text-sm text-gray-700">정렬</label>
+						<select
+							className="border rounded px-2 py-1"
+							value={sort}
+							onChange={(e) => setSort(e.target.value)}
+						>
+							<option value="none">기본</option>
+							<option value="random">랜덤</option>
+							<option value="asc">오름차순</option>
+						</select>
+					</div>
 				</div>
 				{loading ? (
 					<p className="text-gray-600">불러오는 중...</p>
