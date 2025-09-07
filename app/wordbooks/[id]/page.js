@@ -10,6 +10,8 @@ import {
 	getWordsFromWordbook,
 	getUserWordStats,
 	updateStudyCount,
+	getAllUserWordStats,
+	getWordbookCollaborators,
 } from "../../../lib/Firestore";
 import dynamic from "next/dynamic";
 
@@ -25,6 +27,8 @@ export default function WordbookDetailPage() {
 	const [list, setList] = useState([]);
 	const [error, setError] = useState("");
 	const [stats, setStats] = useState({}); // { [wordId]: { studyCount, lastStudiedAt } }
+	const [collaborators, setCollaborators] = useState([]); // [{id,email,displayName}]
+	const [allStats, setAllStats] = useState({}); // { [wordId]: { [userId]: {studyCount,lastStudiedAt} } }
 	const [useForgetting, setUseForgetting] = useState(false);
 	const [sort, setSort] = useState("none"); // none | random | asc
 
@@ -107,6 +111,18 @@ function shouldShowNow(word, stats) {
 		})();
 	}, [wordbookId, user]);
 
+	useEffect(() => {
+		if (!wordbookId) return;
+		(async () => {
+			try {
+				const cols = await getWordbookCollaborators(wordbookId);
+				setCollaborators(cols);
+			} catch {
+				// ignore
+			}
+		})();
+	}, [wordbookId]);
+
 	async function handleAddWord(e) {
 		e.preventDefault();
 		setError("");
@@ -185,9 +201,32 @@ function shouldShowNow(word, stats) {
 					lastStudiedAt: new Date(),
 				},
 			}));
+			setAllStats((prev) => {
+				const current = prev[wordId] || {};
+				return {
+					...prev,
+					[wordId]: {
+						...current,
+						[user.uid]: {
+							studyCount: (current[user.uid]?.studyCount || 0) + 1,
+							lastStudiedAt: new Date(),
+						},
+					},
+				};
+			});
 			await updateStudyCount(wordId, wordbookId, true, user.uid);
 		} catch (e) {
 			setError("학습 기록을 저장하지 못했습니다.");
+		}
+	}
+
+	async function ensureAllStats(wordId) {
+		if (allStats[wordId]) return;
+		try {
+			const s = await getAllUserWordStats(wordbookId, wordId);
+			setAllStats((prev) => ({ ...prev, [wordId]: s }));
+		} catch {
+			// ignore
 		}
 	}
 
@@ -296,7 +335,14 @@ function shouldShowNow(word, stats) {
 					<ul className="divide-y">
 						{displayList.map((w) => (
 							<li key={w.id} className="py-3">
-								<WordRow w={w} stat={stats[w.id]} onRemember={() => handleRemember(w.id)} />
+								<WordRow
+									w={w}
+									stat={stats[w.id]}
+									onRemember={() => handleRemember(w.id)}
+									collaborators={collaborators}
+									perUserStats={allStats[w.id]}
+									onNeedAllStats={() => ensureAllStats(w.id)}
+								/>
 							</li>
 						))}
 					</ul>
@@ -308,7 +354,7 @@ function shouldShowNow(word, stats) {
 	);
 }
 
-function WordRow({ w, stat, onRemember }) {
+function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllStats }) {
 	if (w.spelling) {
 		return (
 			<div className="flex flex-col items-start justify-between gap-4">
@@ -321,6 +367,7 @@ function WordRow({ w, stat, onRemember }) {
 					<StudyInfo stat={stat} />
 					<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white">외움</button>
 				</div>
+				<AllUsersStats collaborators={collaborators} perUserStats={perUserStats} onNeedAllStats={onNeedAllStats} />
 			</div>
 		);
 	}
@@ -339,6 +386,7 @@ function WordRow({ w, stat, onRemember }) {
 				<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white">외움</button>
 			</div>
 			<WordCommon w={w} />
+			<AllUsersStats collaborators={collaborators} perUserStats={perUserStats} onNeedAllStats={onNeedAllStats} />
 		</div>
 	);
 }
@@ -367,6 +415,32 @@ function StudyInfo({ stat }) {
 			<span className="ml-2">마지막: {last}</span>
 		</div>
 	);
+}
+
+function AllUsersStats({ collaborators, perUserStats, onNeedAllStats }) {
+    const hasStats = perUserStats && Object.keys(perUserStats).length > 0;
+    return (
+        <div className="mt-2">
+            {!hasStats ? (
+                <button onClick={onNeedAllStats} className="text-xs text-blue-600 underline">협업자 학습기록 보기</button>
+            ) : (
+                <ul className="mt-1 grid grid-cols-1 gap-1">
+                    {collaborators.map((c) => {
+                        const s = perUserStats[c.id];
+                        const count = s?.studyCount ?? 0;
+                        const last = s?.lastStudiedAt ? formatDate(s.lastStudiedAt) : "-";
+                        return (
+                            <li key={c.id} className="text-xs text-gray-700">
+                                <span className="font-medium">{c.displayName || c.email}</span>
+                                <span className="ml-2">횟수 {count}</span>
+                                <span className="ml-2">마지막 {last}</span>
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+        </div>
+    );
 }
 
 function formatDate(value) {
