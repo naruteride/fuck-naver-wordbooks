@@ -231,8 +231,8 @@ function shouldShowNow(word, stats) {
 	}
 
 	return (
-		<div className="p-6 space-y-6">
-			<div className="flex items-center justify-between">
+		<div className="py-6 sm:px-6 space-y-6">
+			<div className="flex items-center justify-between sm:px-0 px-4">
 				<h1 className="text-xl font-bold">{name || "단어장"}</h1>
 				<Link href="/" className="text-blue-600 hover:underline">← 목록으로</Link>
 			</div>
@@ -358,7 +358,7 @@ function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllSt
 	if (w.spelling) {
 		return (
 			<div className="flex flex-col items-start justify-between gap-4">
-				<div className="font-medium">{w.spelling}</div>
+				<h3 className="font-bold text-2xl">{w.spelling}</h3>
 				{w.pronunciation && (
 					<div className="text-sm text-gray-600">발음: {w.pronunciation}</div>
 				)}
@@ -395,10 +395,10 @@ function WordCommon({ w }) {
 	return (
 		<div className="mt-1 space-y-1">
 			{(w.meanings?.length || 0) > 0 && (
-				<div className="text-sm">뜻: {w.meanings.join(", ")}</div>
+				<ul className="text-sm list-disc list-inside">뜻: {w.meanings.map((m) => <li key={m}>{m}</li>)}</ul>
 			)}
 			{(w.examples?.length || 0) > 0 && (
-				<div className="text-sm text-gray-700">예문: {w.examples.join(" | ")}</div>
+				<ul className="text-sm text-gray-700 list-disc list-inside">예문: {w.examples.map((e) => <li key={e}>{e}</li>)}</ul>
 			)}
 		</div>
 	);

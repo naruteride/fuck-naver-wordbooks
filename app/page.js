@@ -46,7 +46,7 @@ export default function HomePage() {
 	}
 
 	return (
-		<div className="p-6 space-y-6">
+		<div className="py-6 sm:px-6 space-y-6">
 			<section className="bg-white rounded shadow p-4">
 				<h2 className="font-bold mb-3">단어장 만들기</h2>
 				<form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-2">
