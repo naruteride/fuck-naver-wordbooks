@@ -31,6 +31,7 @@ export default function WordbookDetailPage() {
 	const [allStats, setAllStats] = useState({}); // { [wordId]: { [userId]: {studyCount,lastStudiedAt} } }
 	const [useForgetting, setUseForgetting] = useState(false);
 	const [sort, setSort] = useState("none"); // none | random | asc
+	const [revealed, setRevealed] = useState({}); // { [wordId]: boolean }
 
 	// 공통 필드
 	const [meanings, setMeanings] = useState("");
@@ -191,7 +192,8 @@ function shouldShowNow(word, stats) {
 		}
 	}
 
-	async function handleRemember(wordId) {
+	async function handleRemember(event, wordId) {
+		event.stopPropagation();
 		try {
 			// 낙관적 업데이트로 즉시 반영 후 Firestore에 기록
 			setStats((prev) => ({
@@ -228,6 +230,10 @@ function shouldShowNow(word, stats) {
 		} catch {
 			// ignore
 		}
+	}
+
+	function toggleReveal(wordId) {
+		setRevealed((prev) => ({ ...prev, [wordId]: !prev[wordId] }));
 	}
 
 	return (
@@ -338,10 +344,12 @@ function shouldShowNow(word, stats) {
 								<WordRow
 									w={w}
 									stat={stats[w.id]}
-									onRemember={() => handleRemember(w.id)}
+									onRemember={(event) => handleRemember(event, w.id)}
 									collaborators={collaborators}
 									perUserStats={allStats[w.id]}
 									onNeedAllStats={() => ensureAllStats(w.id)}
+									isRevealed={!!revealed[w.id]}
+									onToggleReveal={() => toggleReveal(w.id)}
 								/>
 							</li>
 						))}
@@ -354,18 +362,24 @@ function shouldShowNow(word, stats) {
 	);
 }
 
-function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllStats }) {
+function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllStats, isRevealed, onToggleReveal }) {
 	if (w.spelling) {
 		return (
-			<div className="flex flex-col items-start justify-between gap-4">
+			<div onClick={onToggleReveal} className="flex flex-col items-start justify-between gap-4 cursor-pointer">
 				<h3 className="font-bold text-2xl">{w.spelling}</h3>
 				{w.pronunciation && (
-					<div className="text-sm text-gray-600">발음: {w.pronunciation}</div>
+					<div className="text-sm text-gray-600">
+						{isRevealed ? (
+							<span>발음: {w.pronunciation}</span>
+						) : (
+							<span>발음: [가려짐]</span>
+						)}
+					</div>
 				)}
-				<WordCommon w={w} />
+				<WordCommon w={w} revealed={isRevealed} />
 				<div className="ml-auto flex items-center gap-3">
 					<StudyInfo stat={stat} />
-					<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white">외움</button>
+					<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
 				</div>
 				<AllUsersStats collaborators={collaborators} perUserStats={perUserStats} onNeedAllStats={onNeedAllStats} />
 			</div>
@@ -373,7 +387,7 @@ function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllSt
 	}
 
 	return (
-		<div className="flex flex-col gap-1">
+		<div onClick={onToggleReveal} className="flex flex-col gap-1 cursor-pointer">
 			<div className="font-medium">{w.kanji}</div>
 			{(w.onyomi?.length || 0) > 0 && (
 				<div className="text-sm text-gray-600">음독: {w.onyomi.join(", ")}</div>
@@ -383,19 +397,26 @@ function WordRow({ w, stat, onRemember, collaborators, perUserStats, onNeedAllSt
 			)}
 			<div className="flex items-center gap-3">
 				<StudyInfo stat={stat} />
-				<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white">외움</button>
+				<button onClick={onRemember} className="text-sm px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">외움</button>
 			</div>
-			<WordCommon w={w} />
+			<WordCommon w={w} revealed={isRevealed} />
 			<AllUsersStats collaborators={collaborators} perUserStats={perUserStats} onNeedAllStats={onNeedAllStats} />
 		</div>
 	);
 }
 
-function WordCommon({ w }) {
+function WordCommon({ w, revealed }) {
 	return (
 		<div className="mt-1 space-y-1">
 			{(w.meanings?.length || 0) > 0 && (
-				<ul className="text-sm list-disc list-inside">뜻: {w.meanings.map((m) => <li key={m}>{m}</li>)}</ul>
+				<ul className="text-sm list-disc list-inside">
+					뜻:
+					{revealed ? (
+						w.meanings.map((m) => <li key={m}>{m}</li>)
+					) : (
+						<li>[가려짐]</li>
+					)}
+				</ul>
 			)}
 			{(w.examples?.length || 0) > 0 && (
 				<ul className="text-sm text-gray-700 list-disc list-inside">예문: {w.examples.map((e) => <li key={e}>{e}</li>)}</ul>
