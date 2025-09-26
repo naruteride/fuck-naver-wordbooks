@@ -68,10 +68,14 @@ function LoginCard() {
 	return (
 		<div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
 			<div className="w-full max-w-sm bg-white rounded-lg shadow p-6">
-				<h1 className="text-xl font-bold text-gray-900 mb-4 text-center">{mode === "login" ? "로그인" : "회원가입"}</h1>
+				<h1 className="text-xl font-bold text-gray-900 mb-4 text-center">
+					{mode === "login" ? "로그인" : "회원가입"}
+				</h1>
 				<form onSubmit={handleEmailSubmit} className="space-y-3">
 					<label className="block">
-						<span className="block text-sm text-gray-700">이메일</span>
+						<span className="block text-sm text-gray-700">
+							이메일
+						</span>
 						<input
 							type="email"
 							className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
@@ -81,7 +85,9 @@ function LoginCard() {
 						/>
 					</label>
 					<label className="block">
-						<span className="block text-sm text-gray-700">비밀번호</span>
+						<span className="block text-sm text-gray-700">
+							비밀번호
+						</span>
 						<input
 							type="password"
 							className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring"
@@ -100,7 +106,9 @@ function LoginCard() {
 						className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded py-2 disabled:opacity-60"
 						disabled={submitting}
 					>
-						{mode === "login" ? "이메일로 로그인" : "이메일로 회원가입"}
+						{mode === "login"
+							? "이메일로 로그인"
+							: "이메일로 회원가입"}
 					</button>
 				</form>
 
@@ -155,5 +163,3 @@ function getFriendlyAuthError(error) {
 			return "로그인에 실패했습니다. 잠시 후 다시 시도하세요.";
 	}
 }
-
-

@@ -68,7 +68,10 @@ export default function CollaboratorsSection() {
 					onChange={(e) => setEmail(e.target.value)}
 					required
 				/>
-				<button type="submit" className="bg-blue-600 text-white rounded px-4 py-2">
+				<button
+					type="submit"
+					className="bg-blue-600 text-white rounded px-4 py-2"
+				>
 					초대
 				</button>
 			</form>
@@ -80,10 +83,17 @@ export default function CollaboratorsSection() {
 			) : (
 				<ul className="divide-y">
 					{list.map((c) => (
-						<li key={c.id} className="py-3 flex items-center justify-between">
+						<li
+							key={c.id}
+							className="py-3 flex items-center justify-between"
+						>
 							<div>
-								<div className="font-medium">{c.displayName || c.email}</div>
-								<div className="text-sm text-gray-600">{c.email}</div>
+								<div className="font-medium">
+									{c.displayName || c.email}
+								</div>
+								<div className="text-sm text-gray-600">
+									{c.email}
+								</div>
 							</div>
 							<button
 								onClick={() => handleRemove(c.email)}
@@ -98,5 +108,3 @@ export default function CollaboratorsSection() {
 		</section>
 	);
 }
-
-

@@ -49,7 +49,10 @@ export default function HomePage() {
 		<div className="py-6 sm:px-6 space-y-6">
 			<section className="bg-white rounded shadow p-4">
 				<h2 className="font-bold mb-3">단어장 만들기</h2>
-				<form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-2">
+				<form
+					onSubmit={handleCreate}
+					className="flex flex-col sm:flex-row gap-2"
+				>
 					<input
 						className="border rounded px-3 py-2 flex-1"
 						placeholder="단어장 이름"
@@ -81,15 +84,22 @@ export default function HomePage() {
 				{loading ? (
 					<p className="text-gray-600">불러오는 중...</p>
 				) : wordbooks.length === 0 ? (
-					<p className="text-gray-600">아직 단어장이 없습니다. 새로 만들어 보세요.</p>
+					<p className="text-gray-600">
+						아직 단어장이 없습니다. 새로 만들어 보세요.
+					</p>
 				) : (
 					<ul className="divide-y">
 						{wordbooks.map((w) => (
-							<li key={w.id} className="py-3 flex items-center justify-between">
+							<li
+								key={w.id}
+								className="py-3 flex items-center justify-between"
+							>
 								<div>
 									<div className="font-medium">{w.name}</div>
 									<div className="text-sm text-gray-600">
-										{w.language === "japanese" ? "일본어" : "영어"}
+										{w.language === "japanese"
+											? "일본어"
+											: "영어"}
 									</div>
 								</div>
 								<Link
@@ -106,5 +116,3 @@ export default function HomePage() {
 		</div>
 	);
 }
-
-
